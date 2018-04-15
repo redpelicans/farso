@@ -1,0 +1,17 @@
+# Don't check auto-generated stuff into git
+coverage
+build
+dist
+generated
+node_modules
+generated
+stats.json
+.env
+.env.local
+yarn-error.log
+wallay.config.js
+# Cruft
+.DS_Store
+npm-debug.log
+.idea
+jest.ide.config
