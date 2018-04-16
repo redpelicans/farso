@@ -1,6 +1,6 @@
-const { vibe } = require('../..');
+const { vibe } = require('..');
 
-vibe.default('Main', (mock, { config: { api: { clientId, clientSecret, token } } }) => {
+vibe.default('Main', (mock, { api: { clientId, clientSecret, token } }) => {
   mock('sms')
     .checkHeader({ 'content-Type': /application\/json/ })
     .checkBody({ phoneNumber: /^\+[0-9]+/ })
@@ -17,7 +17,6 @@ vibe.default('Main', (mock, { config: { api: { clientId, clientSecret, token } }
     firstname: /\w+/,
     lastname: /\w+/,
   };
-
 
   mock('token')
     .checkHeader({ 'content-type': 'application/x-www-form-urlencoded' })

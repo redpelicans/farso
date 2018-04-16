@@ -1,13 +1,5 @@
-const endpoints = {
-  sms: {
-    uri: '/auth/v0/sms',
-    method: 'post',
-  },
-  token: {
-    uri: '/oauth/token',
-    method: 'post',
-    reply: (req, res) => res.send('COUCOU'),
-  },
-};
+const { endpoint } = require('..');
 
-module.exports = endpoints;
+endpoint('sms', { uri: '/auth/v0/sms', method: 'post'});
+endpoint('token', { uri: '/oauth/token',  method: 'post', reply: (req, res) => res.send('COUCOU')});
+

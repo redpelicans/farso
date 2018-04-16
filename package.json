@@ -1,8 +1,10 @@
 {
   "name": "trip",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "express middleware to mock http server ",
-  "main": "index.js",
+  "main": "./index.js",
+  "bin": "./server.js",
+  "repository": "https://github.com/redpelicans/trip",
   "license": "MIT",
   "dependencies": {
     "express": "^4.16.3",
@@ -10,7 +12,7 @@
     "ramda": "^0.25.0"
   },
   "scripts": {
-    "start:server": "DEBUG=trip* nodemon --watch examples --watch ./index examples/server.js",
+    "start:server": "DEBUG=trip* nodemon --watch examples --watch ./index ./server.js",
     "test": "jest",
     "lint:staged": "lint-staged",
     "lint:eslint": "eslint --ignore-pattern '!.eslintrc.js'"

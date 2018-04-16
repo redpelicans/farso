@@ -3,12 +3,12 @@ const path = require('path');
 const faker = require('faker');
 var querystring = require('querystring');
 const { initServer } = require('../server');
-const Trip = require('../..');
-const endpoints = require('../endpoints');
+const Trip = require('..');
 
-const  config = {
-  host: 'localhost',
-  port: 8181,
+const host = 'localhost';
+const port = 8282;
+
+const  globals = {
   api: {
     clientId: faker.random.uuid(),
     clientSecret: faker.random.uuid(),
@@ -23,23 +23,22 @@ const  config = {
   }
 };
 
+let tripServer;
+const makeUrl = uri => `${tripServer.url}${uri}`;
 
-const initConfig = () => Promise.resolve({ config });
 const initTrip = ctx => {
-  const mock = Trip({
-    path: path.join(__dirname, '../mocks/**/*.trip.js'),
-    endpoints,
-    config: ctx,
+  const trip = Trip({
+    trips: path.join(__dirname, '../examples/**/*.trip.js'),
+    endpoints: path.join(__dirname, '../examples/endpoints.js'),
+    globals,
   });
-  mock.start('Main');
-  return Promise.resolve({ ...ctx, trip: mock });
+  trip.start('Main');
+  return Promise.resolve({ trip });
 };
 
-let tripServer;
 
-beforeAll(() => initConfig()
-  .then(initTrip)
-  .then(initServer)
+beforeAll(() => initTrip()
+  .then(initServer(host, port))
   .then(({ server}) => tripServer = server));
 
 afterAll(() => tripServer.close());
@@ -47,25 +46,25 @@ afterAll(() => tripServer.close());
 describe('Test api', () => {
   it('should post /auth/v0/sms', () => {
     return axios
-      .post('http://localhost:8181/auth/v0/sms', { phoneNumber: config.api.phoneNumber })
+      .post(makeUrl('/auth/v0/sms'), { phoneNumber: globals.api.phoneNumber })
       .then(({status}) => expect(status).toEqual(204));
   })
 
   it('should not post /auth/v0/sms', () => {
     return axios
-      .post('http://localhost:8181/auth/v0/sms', { phoneNumber: faker.random.word() })
+      .post(makeUrl('/auth/v0/sms'), { phoneNumber: faker.random.word() })
       .catch(({ response: { status}}) => expect(status).toEqual(500));
   })
 
   it('should post /oauth/token', () => {
     const params = {
       grant_type: 'sms',
-      client_id: config.api.clientId,
-      client_secret: config.api.clientSecret,
+      client_id: globals.api.clientId,
+      client_secret: globals.api.clientSecret,
       scope: ['IDENTIFIED', 'AUTHENTICATED', 'APPROVED'],
       sms_code: '42',
       plate_number: faker.lorem.word(),
-      phone_number: config.api.phoneNumber,
+      phone_number: globals.api.phoneNumber,
       firstname: faker.name.firstName(),
       lastname: faker.name.lastName(),
     };
@@ -74,10 +73,10 @@ describe('Test api', () => {
     const query = querystring.stringify(params);
 
     return axios
-      .post('http://localhost:8181/oauth/token', query, headers)
+      .post(makeUrl('/oauth/token'), query, headers)
       .then(({status, data}) => {
         expect(status).toEqual(201);
-        expect(data).toEqual(config.api.token);
+        expect(data).toEqual(globals.api.token);
       });
   })
 

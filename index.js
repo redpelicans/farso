@@ -23,7 +23,7 @@ const isFunction = is(Function);
 const isRegExp = is(RegExp);
 const isArray = is(Array);
 
-class EndPoint {
+class Endpoint {
   constructor({ name, uri, method, reply }) {
     if (!name) throw new Error("Endpoint's name is mandatory!");
     if (!uri) throw new Error(`Endpoint['${name}']'s uri is mandatory!`);
@@ -98,7 +98,6 @@ class Mock {
   }
 }
 
-const makeEndpoints = compose(fromPairs, map(([name, params]) => [name, new EndPoint({ name, ...params })]), toPairs);
 const mockMaker = vibe => name => {
   const endpoint = vibe.getEndpoint(name);
   if (!endpoint) throw new Error(`Unkown endpoint '${name}' for vibe '${vibe.name}'`);
@@ -159,12 +158,14 @@ const getContext = (trip, endpoint) => (req, res, next) => {
 };
 
 class Trip extends EventEmitter {
-  constructor({ router, ...context }) {
+  constructor({ router, endpoints, trips, globals }) {
     super();
     this.router = router;
-    this.context = context;
+    this.config = { endpoints, trips };
+    this.globals = globals;
     this.currentVibe = null;
     this.vibes = {};
+    this.endpoints = {};
   }
 
   registerEndpoint(endpoint) {
@@ -183,10 +184,15 @@ class Trip extends EventEmitter {
     compose(forEach(endpoint => this.registerEndpoint(endpoint)), values)(this.endpoints);
   }
 
+  createEndpoint(name, config){
+    if(this.endpoints[name]) throw new Error(`Endpoint ${name} is already defined!`);
+    this.endpoints[name] = new Endpoint({ name, ...config});
+  }
+
   createVibe(name, fn, params) {
     const vibe = this.vibes[name] || new Vibe(name, this, params);
     this.vibes[name] = vibe;
-    fn(mockMaker(vibe), path(['context', 'config'], this));
+    fn(mockMaker(vibe), this.globals);
   }
 
   getEndpoint(name) {
@@ -205,10 +211,11 @@ class Trip extends EventEmitter {
   }
 
   start(name) {
-    this.endpoints = makeEndpoints(pathOr({}, ['context', 'endpoints'], this));
+    const endpointFiles = glob.sync(path(['config', 'endpoints'], this));
+    endpointFiles.forEach(file => require(file));
+    const tripFiles = glob.sync(path(['config', 'trips'], this));
+    tripFiles.forEach(file => require(file));
     this.registerEndpoints();
-    const files = glob.sync(path(['context', 'path'], this));
-    files.forEach(file => require(file));
     const vibe = name ? this.vibes[name] : this.getDefaultVibe();
     if (!vibe && !name) throw new Error('Unkown default vibe');
     if (!vibe && name) throw new Error(`Unkown vibe '${name}'`);
@@ -225,5 +232,6 @@ let trips;
 const trip = config => (trips = new Trip({ ...config, router: express() }));
 trip.vibe = (name, fn, isDefault) => trips.createVibe(name, fn, { isDefault });
 trip.vibe.default = (name, fn) => trip.vibe(name, fn, true);
+trip.endpoint = (name, config) => trips.createEndpoint(name, config);
 
 module.exports = trip;
