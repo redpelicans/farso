@@ -1,14 +1,18 @@
 #!/usr/bin/env node
 
+const program = require('commander');
+const path = require('path');
 const { compose, pluck } = require('ramda');
 const cors = require('cors');
 const express = require('express');
 const debug = require('debug');
 const logger = require('morgan-debug');
 const Trip = require('.');
-const config = require('./trip.config');
 const loginfo = debug('trip');
+const DEFAULT_CONFIG = './trip.config.js';
 
+program.option('-c, --config <path>', 'set config path').parse(process.argv);
+const config = require(path.join(process.cwd(), program.config || DEFAULT_CONFIG));
 const listVibes = trip => (req, res) =>
   res.send({
     currentVibe: trip.currentVibe && trip.currentVibe.name,
@@ -53,6 +57,7 @@ const initTrip = ({ endpoints, trips, globals }) => {
   });
   trip.on('endpoint.satisfied', (vibe, endpoint) => loginfo(`Endpoint '${endpoint.getLabel(vibe)}' satisfied`));
   trip.on('endpoint.added', endpoint => loginfo(`Endpoint '${endpoint.getLabel()}' created`));
+  trip.on('vibe.added', vibe => loginfo(`Vibe '${vibe.name}' created`));
   trip.on('vibe.selected', vibe => loginfo(`Vibe '${vibe.name}' is now active`));
   return Promise.resolve({ trip });
 };

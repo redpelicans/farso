@@ -202,6 +202,7 @@ class Trip extends EventEmitter {
     const vibe = this.vibes[name] || new Vibe(name, this, params);
     this.vibes[name] = vibe;
     fn(mockMaker(vibe), this.globals);
+    this.emit('vibe.added', vibe);
   }
 
   getEndpoint(name) {
