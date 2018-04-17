@@ -1,9 +1,11 @@
 {
-  "name": "trip",
-  "version": "0.0.3",
+  "name": "trip-mock",
+  "version": "0.0.4",
   "description": "express middleware to mock http server ",
   "main": "./index.js",
-  "bin": "./server.js",
+  "bin": {
+    "trip-server": "./server.js"
+  },
   "repository": "https://github.com/redpelicans/trip",
   "license": "MIT",
   "dependencies": {

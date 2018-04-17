@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const { compose, pluck } = require('ramda');
 const cors = require('cors');
 const express = require('express');
@@ -41,8 +43,8 @@ const initServer = (host, port) => ctx => {
 
 const initTrip = ({ endpoints, trips, globals }) => {
   const trip = Trip({
-    endpoints, 
-    trips, 
+    endpoints,
+    trips,
     globals,
   });
   trip.on('mock.error', ({ message, data }) => {
@@ -63,6 +65,6 @@ if (require.main === module) {
       loginfo(`started on '${url}'`);
     })
     .catch(console.error); // eslint-disable-line no-console
-};
+}
 
 module.exports = { initTrip, initServer };
