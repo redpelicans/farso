@@ -1,6 +1,6 @@
 {
   "name": "trip",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "express middleware to mock http server ",
   "main": "./index.js",
   "bin": "./server.js",
@@ -22,10 +22,6 @@
       "prettier --write",
       "git add",
       "yarn lint:eslint"
-    ],
-    "*.{css, json}": [
-      "prettier --write",
-      "git add"
     ]
   },
   "pre-commit": "lint:staged",
@@ -41,9 +37,11 @@
     "eslint-plugin-react": "^7.7.0",
     "faker": "^4.1.0",
     "jest": "^22.4.3",
+    "lint-staged": "^7.0.4",
     "morgan": "^1.9.0",
     "morgan-debug": "^2.0.0",
     "nodemon": "^1.17.3",
+    "pre-commit": "^1.2.2",
     "prettier": "^1.12.0"
   }
 }

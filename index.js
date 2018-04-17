@@ -84,7 +84,7 @@ class Mock {
       this.checkHeaders.push(header =>
         compose(all(identity), map(checkProp(header)), map(([key, value]) => [key.toLowerCase(), value]), toPairs)(
           param,
-        )
+        ),
       );
     }
     return this;
@@ -127,7 +127,10 @@ class Vibe {
 }
 
 const checkQueries = trip => (req, res, next) => {
-  const { query, mock: { name, doError, checkQueries } } = req; // eslint-disable-line no-shadow
+  const {
+    query,
+    mock: { name, doError, checkQueries },
+  } = req; // eslint-disable-line no-shadow
   const oneFailed = find(check => !check(query))(checkQueries);
   if (!oneFailed) return next();
   trip.emit('mock.error', { message: `check query failed for mock '${name}'`, data: query });
@@ -135,7 +138,10 @@ const checkQueries = trip => (req, res, next) => {
 };
 
 const checkBodies = trip => (req, res, next) => {
-  const { body, mock: { name, doError, checkBodies } } = req; // eslint-disable-line no-shadow
+  const {
+    body,
+    mock: { name, doError, checkBodies },
+  } = req; // eslint-disable-line no-shadow
   const oneFailed = find(check => !check(body))(checkBodies);
   if (!oneFailed) return next();
   trip.emit('mock.error', { message: `check body failed for mock '${name}'`, data: body });
@@ -143,7 +149,10 @@ const checkBodies = trip => (req, res, next) => {
 };
 
 const checkHeaders = trip => (req, res, next) => {
-  const { headers, mock: { name, doError, checkHeaders } } = req; // eslint-disable-line no-shadow
+  const {
+    headers,
+    mock: { name, doError, checkHeaders },
+  } = req; // eslint-disable-line no-shadow
   const oneFailed = find(check => !check(headers))(checkHeaders);
   if (!oneFailed) return next();
   trip.emit('mock.error', { message: `check header failed for mock '${name}'`, data: headers });
@@ -184,9 +193,9 @@ class Trip extends EventEmitter {
     compose(forEach(endpoint => this.registerEndpoint(endpoint)), values)(this.endpoints);
   }
 
-  createEndpoint(name, config){
-    if(this.endpoints[name]) throw new Error(`Endpoint ${name} is already defined!`);
-    this.endpoints[name] = new Endpoint({ name, ...config});
+  createEndpoint(name, config) {
+    if (this.endpoints[name]) throw new Error(`Endpoint ${name} is already defined!`);
+    this.endpoints[name] = new Endpoint({ name, ...config });
   }
 
   createVibe(name, fn, params) {
