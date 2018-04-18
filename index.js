@@ -1,4 +1,7 @@
 const {
+  assocPath,
+  reduce,
+  forEach,
   bind,
   identity,
   has,
@@ -6,7 +9,6 @@ const {
   is,
   path,
   pathOr,
-  forEach,
   find,
   prop,
   values,
@@ -16,14 +18,45 @@ const {
   map,
   toPairs,
   fromPairs,
+  curry,
 } = require('ramda');
 const express = require('express');
 const glob = require('glob');
 const EventEmitter = require('events');
 
+class LocalGetter {
+  constructor(fn, vibe) {
+    this.fn = fn;
+    this.vibe = vibe;
+  }
+
+  equals(v) {
+    return this.value === v;
+  }
+
+  get value() {
+    return this.fn(this.vibe.locals);
+  }
+}
+
 const isFunction = is(Function);
 const isRegExp = is(RegExp);
 const isArray = is(Array);
+const isObject = is(Object);
+const isLocalGetter = is(LocalGetter);
+
+const deepMatch = curry((spec, obj) => {
+  return compose(
+    reduce((acc, [key, value]) => {
+      if (value.equals && isFunction(value.equals)) return acc && value.equals(obj[key]);
+      else if (isRegExp(value)) return acc && value.test(obj[key]);
+      else if (isArray(value)) return Boolean(acc && obj[key] && deepMatch(value, obj[key]));
+      else if (isObject(value)) return Boolean(acc && obj[key] && deepMatch(value, obj[key]));
+      return acc && value === obj[key];
+    }, true),
+    toPairs,
+  )(spec);
+});
 
 class Endpoint {
   constructor({ name, uri, method, reply }) {
@@ -50,6 +83,23 @@ class Mock {
     this.headerChecks = [];
     this.queryChecks = [];
     this.paramsChecks = [];
+    this.setters = [];
+  }
+
+  lset(fn) {
+    this.setters.push(fn);
+    return this;
+  }
+
+  doAssocs(locals, req) {
+    return reduce(
+      (acc, fn) => {
+        const [path, value] = fn(req);
+        return assocPath(path, value, acc);
+      },
+      locals,
+      this.setters,
+    );
   }
 
   getLabel() {
@@ -68,12 +118,7 @@ class Mock {
   checkBody(param) {
     if (isFunction(param)) this.bodyChecks.push(param);
     else {
-      const checkProp = body => ([key, value]) => {
-        if (isRegExp(value)) return value.test(body[key]);
-        else if (isFunction(value)) return value(body[key]);
-        else return equals(body[key], value);
-      };
-      this.bodyChecks.push(body => compose(all(identity), map(checkProp(body)), toPairs)(param));
+      this.bodyChecks.push(deepMatch(param));
     }
     return this;
   }
@@ -158,7 +203,12 @@ class Vibe {
     this.trip = trip;
     this.isDefault = isDefault;
     this.mocks = {};
-    this.locals = { toto: 'COUCOUCOCOUO' };
+    this.locals = {};
+  }
+
+  setLocals(locals) {
+    this.locals = locals;
+    return this;
   }
 
   addMock(mock) {
@@ -181,9 +231,12 @@ const getEligibleMock = (trip, endpoint) => (req, res, next) => {
   if (!req.vibe) return next('route');
   const mocks = req.vibe.getMocks(endpoint.name);
   req.mock = find(mock => mock.isChecked(req))(mocks);
-  if (!req.mock) res.sendStatus(500);
+  if (!req.mock) return res.sendStatus(500);
+  req.vibe.setLocals(req.mock.doAssocs(req.vibe.locals, req));
   next();
 };
+
+const localGetter = vibe => fn => new LocalGetter(fn, vibe);
 
 class Trip extends EventEmitter {
   constructor({ router, endpoints, trips, globals }) {
@@ -219,7 +272,7 @@ class Trip extends EventEmitter {
   createVibe(name, fn, params) {
     const vibe = this.vibes[name] || new Vibe(name, this, params);
     this.vibes[name] = vibe;
-    fn(mockMaker(vibe), { locals: vibe.locals, globals: this.globals });
+    fn(mockMaker(vibe), { lget: localGetter(vibe), globals: this.globals });
     this.emit('vibe.added', vibe);
   }
 
@@ -261,5 +314,6 @@ const trip = config => (trips = new Trip({ ...config, router: express() }));
 trip.vibe = (name, fn, isDefault) => trips.createVibe(name, fn, { isDefault });
 trip.vibe.default = (name, fn) => trip.vibe(name, fn, true);
 trip.endpoint = (name, config) => trips.createEndpoint(name, config);
+trip.deepMatch = deepMatch;
 
 module.exports = trip;
