@@ -55,7 +55,8 @@ const initTrip = ({ endpoints, trips, globals }) => {
     loginfo(message);
     console.log(data); // eslint-disable-line no-console
   });
-  trip.on('endpoint.satisfied', (vibe, endpoint) => loginfo(`Endpoint '${endpoint.getLabel(vibe)}' satisfied`));
+  trip.on('endpoint.selected', (vibe, endpoint) => loginfo(`Endpoint '${endpoint.getLabel(vibe)}' selected`));
+  trip.on('mock.satisfied', mock => loginfo(`Mock '${mock.getLabel()}' satisfied`));
   trip.on('endpoint.added', endpoint => loginfo(`Endpoint '${endpoint.getLabel()}' created`));
   trip.on('vibe.added', vibe => loginfo(`Vibe '${vibe.name}' created`));
   trip.on('vibe.selected', vibe => loginfo(`Vibe '${vibe.name}' is now active`));

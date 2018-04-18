@@ -1,6 +1,6 @@
 const { vibe } = require('..');
 
-vibe.default('Main', (mock, { api: { clientId, clientSecret, token } }) => {
+vibe.default('Main', (mock, { globals: { api: { clientId, clientSecret, token } } }) => {
   mock('sms')
     .checkHeader({ 'content-Type': /application\/json/ })
     .checkBody({ phoneNumber: /^\+[0-9]+/ })
@@ -21,7 +21,5 @@ vibe.default('Main', (mock, { api: { clientId, clientSecret, token } }) => {
   mock('token')
     .checkHeader({ 'content-type': 'application/x-www-form-urlencoded' })
     .checkBody(req)
-    .reply((req, res) => {
-      res.status(201).send(token);
-    });
+    .reply([201, token]);
 });

@@ -1,4 +1,5 @@
 const {
+  bind,
   identity,
   has,
   equals,
@@ -11,6 +12,7 @@ const {
   values,
   compose,
   all,
+  allPass,
   map,
   toPairs,
   fromPairs,
@@ -40,54 +42,100 @@ class Endpoint {
 }
 
 class Mock {
-  constructor(name) {
+  constructor(name, description) {
     this.name = name;
-    this.checkBodies = [];
-    this.checkHeaders = [];
-    this.checkQueries = [];
+    this.description = description;
+    this.doReply = null;
+    this.bodyChecks = [];
+    this.headerChecks = [];
+    this.queryChecks = [];
+    this.paramsChecks = [];
   }
 
-  replyError(param) {
-    if (isFunction(param)) this.doError = param;
-    else
-      this.doError = res => {
-        res.sendStatus(param);
+  getLabel() {
+    return this.description || this.name;
+  }
+
+  // replyError(param) {
+  //   if (isFunction(param)) this.doError = param;
+  //   else
+  //     this.doError = res => {
+  //       res.sendStatus(param);
+  //     };
+  //   return this;
+  // }
+
+  checkBody(param) {
+    if (isFunction(param)) this.bodyChecks.push(param);
+    else {
+      const checkProp = body => ([key, value]) => {
+        if (isRegExp(value)) return value.test(body[key]);
+        else if (isFunction(value)) return value(body[key]);
+        else return equals(body[key], value);
       };
+      this.bodyChecks.push(body => compose(all(identity), map(checkProp(body)), toPairs)(param));
+    }
     return this;
   }
 
-  checkBody(param) {
-    if (isFunction(param)) this.checkBodies.push(param);
+  checkParams(param) {
+    if (isFunction(param)) this.paramsChecks.push(param);
     else {
-      const checkProp = body => ([key, value]) =>
-        has(key, body) && isRegExp(value) ? value.test(body[key]) : equals(body[key], value);
-      this.checkBodies.push(body => compose(all(identity), map(checkProp(body)), toPairs)(param));
+      const checkProp = query => ([key, value]) =>
+        has(key, query) && isRegExp(value) ? value.test(query[key]) : equals(query[key], value);
+      this.paramsChecks.push(query => compose(all(identity), map(checkProp(query)), toPairs)(param));
     }
     return this;
   }
 
   checkQuery(param) {
-    if (isFunction(param)) this.checkQueries.push(param);
+    if (isFunction(param)) this.queryChecks.push(param);
     else {
       const checkProp = query => ([key, value]) =>
         has(key, query) && isRegExp(value) ? value.test(query[key]) : equals(query[key], value);
-      this.checkQueries.push(query => compose(all(identity), map(checkProp(query)), toPairs)(param));
+      this.queryChecks.push(query => compose(all(identity), map(checkProp(query)), toPairs)(param));
     }
     return this;
   }
 
   checkHeader(param) {
-    if (isFunction(param)) this.checkHeaders.push(param);
+    if (isFunction(param)) this.headerChecks.push(param);
     else {
       const checkProp = header => ([key, value]) =>
         has(key, header) && isRegExp(value) ? value.test(header[key]) : equals(header[key], value);
-      this.checkHeaders.push(header =>
+      this.headerChecks.push(header =>
         compose(all(identity), map(checkProp(header)), map(([key, value]) => [key.toLowerCase(), value]), toPairs)(
           param,
         ),
       );
     }
     return this;
+  }
+
+  doCheckHeaders(req) {
+    return allPass(this.headerChecks, req.headers);
+  }
+
+  doCheckParams(req) {
+    return allPass(this.paramsChecks)(req.params);
+  }
+
+  doCheckQuery(req) {
+    return allPass(this.queryChecks)(req.query);
+  }
+
+  doCheckBody(req) {
+    return allPass(this.bodyChecks)(req.body);
+  }
+
+  isChecked(req) {
+    const checks = [
+      this.doCheckHeaders.bind(this),
+      this.doCheckParams.bind(this),
+      this.doCheckQuery.bind(this),
+      this.doCheckBody.bind(this),
+    ];
+    return allPass(checks)(req);
   }
 
   reply(param) {
@@ -98,10 +146,10 @@ class Mock {
   }
 }
 
-const mockMaker = vibe => name => {
+const mockMaker = vibe => (name, description) => {
   const endpoint = vibe.getEndpoint(name);
   if (!endpoint) throw new Error(`Unkown endpoint '${name}' for vibe '${vibe.name}'`);
-  return vibe.addMock(new Mock(name));
+  return vibe.addMock(new Mock(name, description));
 };
 
 class Vibe {
@@ -110,10 +158,12 @@ class Vibe {
     this.trip = trip;
     this.isDefault = isDefault;
     this.mocks = {};
+    this.locals = { toto: 'COUCOUCOCOUO' };
   }
 
   addMock(mock) {
-    this.mocks[mock.name] = mock;
+    if (!this.mocks[mock.name]) this.mocks[mock.name] = [mock];
+    else this.mocks[mock.name].push(mock);
     return mock;
   }
 
@@ -121,48 +171,17 @@ class Vibe {
     return this.trip.getEndpoint(name);
   }
 
-  getMock(name) {
+  getMocks(name) {
     return this.mocks[name];
   }
 }
 
-const checkQueries = trip => (req, res, next) => {
-  const {
-    query,
-    mock: { name, doError, checkQueries },
-  } = req; // eslint-disable-line no-shadow
-  const oneFailed = find(check => !check(query))(checkQueries);
-  if (!oneFailed) return next();
-  trip.emit('mock.error', { message: `check query failed for mock '${name}'`, data: query });
-  doError ? doError(res) : res.sendStatus(500); // eslint-disable-line no-unused-expressions
-};
-
-const checkBodies = trip => (req, res, next) => {
-  const {
-    body,
-    mock: { name, doError, checkBodies },
-  } = req; // eslint-disable-line no-shadow
-  const oneFailed = find(check => !check(body))(checkBodies);
-  if (!oneFailed) return next();
-  trip.emit('mock.error', { message: `check body failed for mock '${name}'`, data: body });
-  doError ? doError(res) : res.sendStatus(500); // eslint-disable-line no-unused-expressions
-};
-
-const checkHeaders = trip => (req, res, next) => {
-  const {
-    headers,
-    mock: { name, doError, checkHeaders },
-  } = req; // eslint-disable-line no-shadow
-  const oneFailed = find(check => !check(headers))(checkHeaders);
-  if (!oneFailed) return next();
-  trip.emit('mock.error', { message: `check header failed for mock '${name}'`, data: headers });
-  doError ? doError(res) : res.sendStatus(500); // eslint-disable-line no-unused-expressions
-};
-
-const getContext = (trip, endpoint) => (req, res, next) => {
+const getEligibleMock = (trip, endpoint) => (req, res, next) => {
   req.vibe = trip.currentVibe;
   if (!req.vibe) return next('route');
-  req.mock = req.vibe.getMock(endpoint.name);
+  const mocks = req.vibe.getMocks(endpoint.name);
+  req.mock = find(mock => mock.isChecked(req))(mocks);
+  if (!req.mock) res.sendStatus(500);
   next();
 };
 
@@ -178,13 +197,12 @@ class Trip extends EventEmitter {
   }
 
   registerEndpoint(endpoint) {
-    const middlewares = [getContext(this, endpoint), checkHeaders(this), checkQueries(this), checkBodies(this)];
-
-    this.router[endpoint.method](endpoint.uri, middlewares, (req, res, next) => {
+    this.router[endpoint.method](endpoint.uri, getEligibleMock(this, endpoint), (req, res, next) => {
+      this.emit('endpoint.selected', this.currentVibe, endpoint, req);
       const mockFn = (req.mock && req.mock.doReply) || endpoint.reply;
       if (!mockFn) return next('route');
       mockFn(req, res);
-      this.emit('endpoint.satisfied', this.currentVibe, endpoint);
+      this.emit('mock.satisfied', req.mock);
     });
     this.emit('endpoint.added', endpoint);
   }
@@ -201,7 +219,7 @@ class Trip extends EventEmitter {
   createVibe(name, fn, params) {
     const vibe = this.vibes[name] || new Vibe(name, this, params);
     this.vibes[name] = vibe;
-    fn(mockMaker(vibe), this.globals);
+    fn(mockMaker(vibe), { locals: vibe.locals, globals: this.globals });
     this.emit('vibe.added', vibe);
   }
 
