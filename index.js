@@ -59,13 +59,14 @@ const deepMatch = curry((spec, obj) => {
 });
 
 class Endpoint {
-  constructor({ name, uri, method, reply }) {
+  constructor({ name, uri, method, reply, use }) {
     if (!name) throw new Error("Endpoint's name is mandatory!");
     if (!uri) throw new Error(`Endpoint['${name}']'s uri is mandatory!`);
-    if (!method) throw new Error(`Endpoint['${method}']'s method is mandatory!`);
+    if (!method && !use) throw new Error(`Endpoint['${method}']'s method is mandatory!`);
     this.name = name;
     this.uri = uri;
-    this.method = method.toLowerCase();
+    if (method) this.method = method.toLowerCase();
+    this.use = use;
     this.reply = reply;
   }
 
@@ -250,13 +251,16 @@ class Trip extends EventEmitter {
   }
 
   registerEndpoint(endpoint) {
-    this.router[endpoint.method](endpoint.uri, getEligibleMock(this, endpoint), (req, res, next) => {
-      this.emit('endpoint.selected', this.currentVibe, endpoint, req);
-      const mockFn = (req.mock && req.mock.doReply) || endpoint.reply;
-      if (!mockFn) return next('route');
-      mockFn(req, res);
-      this.emit('mock.satisfied', req.mock);
-    });
+    if (endpoint.use) this.router.use(endpoint.uri, endpoint.use);
+    else {
+      this.router[endpoint.method](endpoint.uri, getEligibleMock(this, endpoint), (req, res, next) => {
+        this.emit('endpoint.selected', this.currentVibe, endpoint, req);
+        const mockFn = (req.mock && req.mock.doReply) || endpoint.reply;
+        if (!mockFn) return next('route');
+        mockFn(req, res);
+        this.emit('mock.satisfied', req.mock);
+      });
+    }
     this.emit('endpoint.added', endpoint);
   }
 
