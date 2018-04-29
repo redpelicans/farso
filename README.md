@@ -68,26 +68,19 @@ Then run:
 
 ```
 $ DEBUG=trip* npx trip-server --config ./trip.config.js 
-  trip Vibe 'Main' created +0ms
-  trip Endpoint 'people:/public/v0/people' created +2ms
-  trip Vibe 'Main' is now active +1ms
-  trip started on 'http://localhost:33811' +0ms
-  trip GET / 404 7.059 ms - 139 +0ms
-  trip GET /favicon.ico 404 1.028 ms - 150 +427ms
-  trip Endpoint 'Main@people:/public/v0/people' selected +23s
-  trip Mock 'people' visited +5ms
-  trip GET /public/v0/people 200 5.629 ms - 49 +12s
-  trip Endpoint 'Main@people:/public/v0/people' selected +46s
-  trip Mock 'people' visited +1ms
-  trip GET /public/v0/people 200 1.319 ms - 49 +46s
+  trip Creating Vibe 'Main'
+  trip Endpoint 'people:/public/v0/people' created
+  trip Vibe 'Main' is now active
+  trip server started on 'http://localhost:33811'
 ```
 
 And now:
 
 ```
 $ curl http://localhost:33811/public/v0/people
-[{"id":1,"name":"Mohr"},{"id":2,"name":"Muller"}]⏎                    
+[{"id":1,"name":"Mohr"},{"id":2,"name":"Muller"}]                  
 ```
+
 Here it is, you made your first trip mock.
 
 # API
