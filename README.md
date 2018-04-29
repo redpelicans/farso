@@ -28,7 +28,7 @@ $ npm install trip-mock
 
 # 'trip mock' at first glance
 
-Let's say your system is using a CRM backoffice with an HTTP api offering an endpoint `/public/v0/people/`.
+Let's say your system is using a CRM backoffice with an HTTP API offering an endpoint `GET /public/v0/people`.
 
 You have to mock this endpoint.
 
