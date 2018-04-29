@@ -26,7 +26,7 @@ Then manually or from your testing framework you can select the desired vibe and
 $ npm install trip-mock
 ```
 
-# Use it in a nutshell
+# `trip mock` at first glance
 
 Let's say your system is using a CRM backoffice with an HTTP api offering an endpoint `/public/v0/people/`.
 
