@@ -92,4 +92,10 @@ Here it is, you made your first trip mock.
 
 # API
 
+## endpoints
 
+## mock
+
+## config
+
+## server
