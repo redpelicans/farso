@@ -2,7 +2,7 @@
 
 `trip-mock` is an HTTP mocking library for nodeJS.
 
-`trip-mock` is mainly used to realize e2e/human tests of HTTP services.
+`trip-mock` is mainly used to craft e2e/human tests of HTTP services.
 
 # How does it work?
 
