@@ -1,6 +1,6 @@
 {
   "name": "trip-mock",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Mocking library for NodeJS",
   "keywords": [
     "mock",
@@ -15,7 +15,7 @@
   },
   "repository": "https://github.com/redpelicans/trip",
   "license": "MIT",
-  "degendencies": {
+  "dependencies": {
     "commander": "^2.15.1",
     "express": "^4.16.3",
     "glob": "^7.1.2",
