@@ -15,7 +15,7 @@
     "ramda": "^0.25.0"
   },
   "scripts": {
-    "dist": "babel src -d .",
+    "dist": "babel src -d . --ignore __tests__/*.js",
     "start:server": "DEBUG=trip* nodemon --watch examples --watch ./index ./server.js",
     "test": "DEBUG=trip* jest src/*",
     "lint:staged": "lint-staged",
