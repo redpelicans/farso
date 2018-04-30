@@ -4,12 +4,12 @@ const faker = require('faker');
 module.exports = {
   host: 'localhost',
   port: 8181,
-  trips: path.join(__dirname, './examples/**/*.trip.js'),
+  vibes: path.join(__dirname, './examples/**/*.vibe.js'),
   endpoints: path.join(__dirname, './examples/endpoints.js'),
-  globals: { 
+  globals: {
     api: {
       clientId: faker.random.uuid(),
       clientSecret: faker.random.uuid(),
-    }
+    },
   },
 };

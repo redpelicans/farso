@@ -48,10 +48,10 @@ const initServer = ctx => {
 };
 
 const initTrip = ctx => {
-  const { endpoints, trips, globals } = ctx;
+  const { endpoints, vibes, globals } = ctx;
   const trip = Trip({
     endpoints,
-    trips,
+    vibes,
     globals,
   });
   trip.on('mock.error', ({ message, data }) => {

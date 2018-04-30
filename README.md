@@ -1,5 +1,8 @@
 # trip-mock
 
+[![Build Status](https://travis-ci.org/redpelicans/trip.svg?branch=develop)](https://travis-ci.org/redpelicans/trip)
+
+
 `trip-mock` is an HTTP mocking library for nodeJS.
 
 `trip-mock` is mainly used to craft e2e/human tests of HTTP services.

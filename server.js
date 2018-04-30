@@ -81,12 +81,12 @@ var initServer = function initServer(ctx) {
 
 var initTrip = function initTrip(ctx) {
   var endpoints = ctx.endpoints,
-    trips = ctx.trips,
+    vibes = ctx.vibes,
     globals = ctx.globals;
 
   var trip = Trip({
     endpoints: endpoints,
-    trips: trips,
+    vibes: vibes,
     globals: globals,
   });
   trip.on('mock.error', function(_ref) {

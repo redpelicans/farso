@@ -470,7 +470,7 @@ var Trip = (function(_EventEmitter) {
   function Trip(_ref13) {
     var router = _ref13.router,
       endpoints = _ref13.endpoints,
-      trips = _ref13.trips,
+      vibes = _ref13.vibes,
       globals = _ref13.globals;
 
     _classCallCheck(this, Trip);
@@ -478,7 +478,7 @@ var Trip = (function(_EventEmitter) {
     var _this = _possibleConstructorReturn(this, (Trip.__proto__ || Object.getPrototypeOf(Trip)).call(this));
 
     _this.router = router;
-    _this.config = { endpoints: endpoints, trips: trips };
+    _this.config = { endpoints: endpoints, vibes: vibes };
     _this.globals = globals;
     _this.currentVibe = null;
     _this.vibes = {};
@@ -562,7 +562,7 @@ var Trip = (function(_EventEmitter) {
         endpointFiles.forEach(function(file) {
           return require(file);
         });
-        var tripFiles = glob.sync(path(['config', 'trips'], this));
+        var tripFiles = glob.sync(path(['config', 'vibes'], this));
         tripFiles.forEach(function(file) {
           return require(file);
         });
@@ -585,19 +585,17 @@ var Trip = (function(_EventEmitter) {
   return Trip;
 })(EventEmitter);
 
-var trips = void 0;
-var trip = function trip(config) {
-  return (trips = new Trip(_extends({}, config, { router: express() })));
+var trip = void 0;
+module.exports = function(config) {
+  return (trip = new Trip(_extends({}, config, { router: express() })));
 };
-trip.vibe = function(name, fn, isDefault) {
-  return trips.createVibe(name, fn, { isDefault: isDefault });
+module.exports.vibe = function(name, fn, isDefault) {
+  return trip.createVibe(name, fn, { isDefault: isDefault });
 };
-trip.vibe.default = function(name, fn) {
-  return trip.vibe(name, fn, true);
+module.exports.vibe.default = function(name, fn) {
+  return module.exports.vibe(name, fn, true);
 };
-trip.endpoint = function(name, config) {
-  return trips.createEndpoint(name, config);
+module.exports.endpoint = function(name, config) {
+  return trip.createEndpoint(name, config);
 };
-trip.deepMatch = deepMatch;
-
-module.exports = trip;
+module.exports.deepMatch = deepMatch;

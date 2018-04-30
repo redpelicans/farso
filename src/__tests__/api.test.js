@@ -21,7 +21,7 @@ const globals = {
 
 const makeUrl = uri => `${tripServer.url}${uri}`;
 const config = {
-  trips: path.join(__dirname, '../../examples/api.trip.js'),
+  vibes: path.join(__dirname, '../../examples/api.vibe.js'),
   endpoints: path.join(__dirname, '../../examples/endpoints.js'),
   globals,
 };

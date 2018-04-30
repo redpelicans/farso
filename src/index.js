@@ -240,10 +240,10 @@ const getEligibleMock = (trip, endpoint) => (req, res, next) => {
 const localGetter = vibe => fn => new LocalGetter(fn, vibe);
 
 class Trip extends EventEmitter {
-  constructor({ router, endpoints, trips, globals }) {
+  constructor({ router, endpoints, vibes, globals }) {
     super();
     this.router = router;
-    this.config = { endpoints, trips };
+    this.config = { endpoints, vibes };
     this.globals = globals;
     this.currentVibe = null;
     this.vibes = {};
@@ -298,7 +298,7 @@ class Trip extends EventEmitter {
   start(name) {
     const endpointFiles = glob.sync(path(['config', 'endpoints'], this));
     endpointFiles.forEach(file => require(file));
-    const tripFiles = glob.sync(path(['config', 'trips'], this));
+    const tripFiles = glob.sync(path(['config', 'vibes'], this));
     tripFiles.forEach(file => require(file));
     this.registerEndpoints();
     const vibe = name ? this.vibes[name] : this.getDefaultVibe();
@@ -313,11 +313,9 @@ class Trip extends EventEmitter {
   }
 }
 
-let trips;
-const trip = config => (trips = new Trip({ ...config, router: express() }));
-trip.vibe = (name, fn, isDefault) => trips.createVibe(name, fn, { isDefault });
-trip.vibe.default = (name, fn) => trip.vibe(name, fn, true);
-trip.endpoint = (name, config) => trips.createEndpoint(name, config);
-trip.deepMatch = deepMatch;
-
-module.exports = trip;
+let trip;
+module.exports = config => (trip = new Trip({ ...config, router: express() }));
+module.exports.vibe = (name, fn, isDefault) => trip.createVibe(name, fn, { isDefault });
+module.exports.vibe.default = (name, fn) => module.exports.vibe(name, fn, true);
+module.exports.endpoint = (name, config) => trip.createEndpoint(name, config);
+module.exports.deepMatch = deepMatch;
