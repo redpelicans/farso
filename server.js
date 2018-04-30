@@ -1,76 +1,135 @@
 #!/usr/bin/env node
+'use strict';
 
-const program = require('commander');
-const path = require('path');
-const { compose, pluck } = require('ramda');
-const cors = require('cors');
-const express = require('express');
-const debug = require('debug');
-const logger = require('morgan-debug');
-const Trip = require('.');
-const loginfo = debug('trip');
-const DEFAULT_CONFIG = './trip.config.js';
+var _extends =
+  Object.assign ||
+  function(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  };
 
-program.option('-c, --config <path>', 'set config path').parse(process.argv);
-const config = require(path.join(process.cwd(), program.config || DEFAULT_CONFIG));
-const listVibes = trip => (req, res) =>
-  res.send({
-    currentVibe: trip.currentVibe && trip.currentVibe.name,
-    vibes: compose(pluck('name'))(trip.listVibes()),
-  });
+var program = require('commander');
+var path = require('path');
 
-const selectVibe = trip => (req, res) => {
-  const { vibe } = req.params;
-  trip.select(vibe);
-  res.send({ currentVibe: trip.currentVibe.name });
+var _require = require('ramda'),
+  compose = _require.compose,
+  pluck = _require.pluck;
+
+var cors = require('cors');
+var express = require('express');
+var debug = require('debug');
+var logger = require('morgan-debug');
+var Trip = require('.');
+var loginfo = debug('trip');
+var DEFAULT_CONFIG = './trip.config.js';
+
+var listVibes = function listVibes(trip) {
+  return function(req, res) {
+    return res.send({
+      currentVibe: trip.currentVibe && trip.currentVibe.name,
+      vibes: compose(pluck('name'))(trip.listVibes()),
+    });
+  };
 };
 
-const initServer = (host, port) => ctx => {
-  return new Promise((resolve, reject) => {
-    const { trip } = ctx;
-    const app = express();
+var selectVibe = function selectVibe(trip) {
+  return function(req, res) {
+    var vibe = req.params.vibe;
+
+    trip.select(vibe);
+    res.send({ currentVibe: trip.currentVibe.name });
+  };
+};
+
+var adminPath = '/_trips_';
+
+var initServer = function initServer(ctx) {
+  var _ctx$host = ctx.host,
+    host = _ctx$host === undefined ? 'localhost' : _ctx$host,
+    port = ctx.port,
+    trip = ctx.trip;
+
+  return new Promise(function(resolve, reject) {
+    var app = express();
     app.use(cors());
     app.use(express.json());
     app.use(express.urlencoded());
-    app.get('/_trips_/:vibe', selectVibe(trip));
-    app.get('/_trips_', listVibes(trip));
+    app.get(adminPath + '/:vibe', selectVibe(trip));
+    app.get(adminPath, listVibes(trip));
     app.use(logger('trip', 'dev'));
     app.use(trip.router);
-    const srv = app.listen(port, host, err => {
+    var srv = app.listen(port, host, function(err) {
       if (err) return reject(err);
-      const { port: sport } = srv.address();
-      srv.url = `http://${host}:${sport}`;
-      return resolve({ ...ctx, server: srv });
+
+      var _srv$address = srv.address(),
+        sport = _srv$address.port;
+
+      srv.url = 'http://' + host + ':' + sport;
+      loginfo("server started on '" + srv.url + "'");
+      loginfo("check vibes here: '" + srv.url + adminPath + "'");
+      return resolve(_extends({}, ctx, { server: srv }));
     });
   });
 };
 
-const initTrip = ({ endpoints, trips, globals }) => {
-  const trip = Trip({
-    endpoints,
-    trips,
-    globals,
+var initTrip = function initTrip(ctx) {
+  var endpoints = ctx.endpoints,
+    trips = ctx.trips,
+    globals = ctx.globals;
+
+  var trip = Trip({
+    endpoints: endpoints,
+    trips: trips,
+    globals: globals,
   });
-  trip.on('mock.error', ({ message, data }) => {
+  trip.on('mock.error', function(_ref) {
+    var message = _ref.message,
+      data = _ref.data;
+
     loginfo(message);
     console.log(data); // eslint-disable-line no-console
   });
-  trip.on('endpoint.selected', (vibe, endpoint) => loginfo(`Endpoint '${endpoint.getLabel(vibe)}' selected`));
-  trip.on('mock.satisfied', mock => loginfo(`Mock '${mock.getLabel()}' visited`));
-  trip.on('endpoint.added', endpoint => loginfo(`Endpoint '${endpoint.getLabel()}' created`));
-  trip.on('vibe.added', vibe => loginfo(`Vibe '${vibe.name}' created`));
-  trip.on('vibe.selected', vibe => loginfo(`Vibe '${vibe.name}' is now active`));
-  return Promise.resolve({ trip });
+  trip.on('endpoint.selected', function(vibe, endpoint) {
+    return loginfo("Endpoint '" + endpoint.getLabel(vibe) + "' selected");
+  });
+  trip.on('mock.visited', function(mock) {
+    return loginfo("Mock '" + mock.getLabel() + "' visited");
+  });
+  trip.on('endpoint.added', function(endpoint) {
+    return loginfo("Endpoint '" + endpoint.getLabel() + "' created");
+  });
+  trip.on('vibe.adding', function(vibe) {
+    return loginfo("Adding Vibe '" + vibe.name + "'");
+  });
+  trip.on('vibe.updating', function(vibe) {
+    return loginfo("Updating Vibe '" + vibe.name + "'");
+  });
+  trip.on('vibe.selected', function(vibe) {
+    return loginfo("Vibe '" + vibe.name + "' is now active");
+  });
+  return Promise.resolve(_extends({}, ctx, { trip: trip }));
+};
+
+var runServer = function runServer(config) {
+  return initTrip(config)
+    .then(initServer)
+    .then(function(ctx) {
+      ctx.trip.start();
+      return ctx;
+    });
 };
 
 if (require.main === module) {
-  initTrip(config)
-    .then(initServer(config.host, config.port))
-    .then(({ trip, server: { url } }) => {
-      trip.start();
-      loginfo(`started on '${url}'`);
-    })
-    .catch(console.error); // eslint-disable-line no-console
+  program.option('-c, --config <path>', 'set config path').parse(process.argv);
+  var config = require(path.join(process.cwd(), program.config || DEFAULT_CONFIG));
+  runServer(config).catch(console.error); // eslint-disable-line no-console
 }
 
-module.exports = { initTrip, initServer };
+module.exports = { runServer: runServer, initTrip: initTrip, initServer: initServer };

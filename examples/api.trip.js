@@ -1,4 +1,4 @@
-const { vibe } = require('..');
+const { vibe } = require('../src');
 
 vibe.default('Main', (mock, { globals: { api: { clientId, clientSecret, token } } }) => {
   mock('sms')

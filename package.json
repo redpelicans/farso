@@ -1,6 +1,6 @@
 {
   "name": "trip-mock",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "express middleware to mock http server ",
   "main": "./index.js",
   "bin": {
@@ -15,8 +15,9 @@
     "ramda": "^0.25.0"
   },
   "scripts": {
+    "dist": "babel src -d .",
     "start:server": "DEBUG=trip* nodemon --watch examples --watch ./index ./server.js",
-    "test": "jest",
+    "test": "DEBUG=trip* jest src/*",
     "lint:staged": "lint-staged",
     "lint:eslint": "eslint --ignore-pattern '!.eslintrc.js'"
   },
@@ -30,6 +31,9 @@
   "pre-commit": "lint:staged",
   "devDependencies": {
     "axios": "^0.18.0",
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-stage-0": "^6.24.1",
     "cors": "^2.8.4",
     "debug": "^3.1.0",
     "eslint": "^4.19.1",
@@ -46,5 +50,11 @@
     "nodemon": "^1.17.3",
     "pre-commit": "^1.2.2",
     "prettier": "^1.12.0"
+  },
+  "babel": {
+    "presets": [
+      "env",
+      "stage-0"
+    ]
   }
 }
