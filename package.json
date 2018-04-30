@@ -1,6 +1,6 @@
 {
   "name": "trip-mock",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Mocking library for NodeJS",
   "keywords": [
     "mock",
@@ -17,10 +17,10 @@
   "license": "MIT",
   "dependencies": {
     "commander": "^2.15.1",
+    "cors": "^2.8.4",
     "express": "^4.16.3",
     "glob": "^7.1.2",
     "morgan-debug": "^2.0.0",
-    "cors": "^2.8.4",
     "ramda": "^0.25.0"
   },
   "scripts": {
