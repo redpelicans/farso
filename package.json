@@ -1,6 +1,6 @@
 {
   "name": "trip-mock",
-  "version": "0.2.4",
+  "version": "0.3.0",
   "description": "Mocking library for NodeJS",
   "keywords": [
     "mock",
@@ -20,6 +20,8 @@
     "cors": "^2.8.4",
     "express": "^4.16.3",
     "glob": "^7.1.2",
+    "debug": "^3.1.0",
+    "morgan": "^1.9.0",
     "morgan-debug": "^2.0.0",
     "ramda": "^0.25.0"
   },
@@ -43,7 +45,6 @@
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.6.1",
     "babel-preset-stage-0": "^6.24.1",
-    "debug": "^3.1.0",
     "eslint": "^4.19.1",
     "eslint-config-airbnb": "^16.1.0",
     "eslint-config-prettier": "^2.9.0",
@@ -53,7 +54,6 @@
     "faker": "^4.1.0",
     "jest": "^22.4.3",
     "lint-staged": "^7.0.4",
-    "morgan": "^1.9.0",
     "nodemon": "^1.17.3",
     "pre-commit": "^1.2.2",
     "prettier": "^1.12.0"
