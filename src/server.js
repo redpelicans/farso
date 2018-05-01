@@ -71,6 +71,7 @@ const runServer = config =>
   initTrip(config)
     .then(initServer)
     .then(ctx => {
+      ctx.trip.loadConfig();
       ctx.trip.start();
       return ctx;
     });

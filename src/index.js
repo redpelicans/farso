@@ -159,7 +159,7 @@ class Mock {
   }
 
   doCheckHeaders(req) {
-    return allPass(this.headerChecks, req.headers);
+    return allPass(this.headerChecks)(req.headers);
   }
 
   doCheckParams(req) {
@@ -199,7 +199,7 @@ const mockMaker = vibe => (name, description) => {
 };
 
 class Vibe {
-  constructor(name, trip, { isDefault }) {
+  constructor(name, trip, { isDefault } = {}) {
     this.name = name;
     this.trip = trip;
     this.isDefault = isDefault;
@@ -232,7 +232,7 @@ const getEligibleMock = (trip, endpoint) => (req, res, next) => {
   if (!req.vibe) return next('route');
   const mocks = req.vibe.getMocks(endpoint.name);
   req.mock = find(mock => mock.isChecked(req))(mocks);
-  if (!req.mock) return res.sendStatus(500);
+  if (!req.mock) return res.sendStatus(trip.config.errorCode || 500);
   req.vibe.setLocals(req.mock.doAssocs(req.vibe.locals, req));
   next();
 };
@@ -240,10 +240,10 @@ const getEligibleMock = (trip, endpoint) => (req, res, next) => {
 const localGetter = vibe => fn => new LocalGetter(fn, vibe);
 
 class Trip extends EventEmitter {
-  constructor({ router, endpoints, vibes, globals }) {
+  constructor({ router, endpoints, vibes, globals, errorCode }) {
     super();
     this.router = router;
-    this.config = { endpoints, vibes };
+    this.config = { endpoints, vibes, errorCode };
     this.globals = globals;
     this.currentVibe = null;
     this.vibes = {};
@@ -295,11 +295,14 @@ class Trip extends EventEmitter {
     this.emit('vibe.selected', vibe);
   }
 
-  start(name) {
+  loadConfig() {
     const endpointFiles = glob.sync(path(['config', 'endpoints'], this));
     endpointFiles.forEach(file => require(file));
     const tripFiles = glob.sync(path(['config', 'vibes'], this));
     tripFiles.forEach(file => require(file));
+  }
+
+  start(name) {
     this.registerEndpoints();
     const vibe = name ? this.vibes[name] : this.getDefaultVibe();
     if (!vibe && !name) throw new Error('Unkown default vibe');
