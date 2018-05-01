@@ -86,12 +86,48 @@ $ curl http://localhost:33811/public/v0/people
 
 Here it is, you made your first trip mock.
 
-# API
+# DSL API
+
+## config
+
+With DSL api we will use the embendded server and will setup trip library with setup files like above sample. 
+
+`config` file must export and object with those properties:
+
+* `host`: default to localhost
+* `port`: optional, server's binding port, when no set server will bind dynamically to an available port
+* `errorCode`: optional, http status code to return when an `endpoint` matches without a `mock`.
+* `vibes`: glob partern to select vibe's files to load (see below) ex : `path.join(__dirname, './data/**/*.vibes.js')` or just `path.join(__dirname, './vibes.js')`
+* `endpoint`: glob partern to select endpoint's files to load (see below)
+
+trip's server must be launched with: ``` $ DEBUG=trip* npx trip-server --config ./trip.config.js ```
+
+Server can be also setup and launched thanks { initTrip, initServer, runServer } functions exported from 
+'trip-mock/server' (see Low Level API section below)
 
 ## endpoint
 
+`endpoint` files are used to define ..., endpoints, aka `expressjs` routes.
+
+ex:
+
+```
+	const { endpoint } = require('trip-mock');
+	endpoint('people', { uri: '/public/v0/people', method: 'get' });
+```
+
+This call to `endpoint` will register an expressjs route on GET '/public/v0/people'
+
+**function endpoint(name, params)**
+* `name`: String to identify an endpoint
+* `params`: 
+	* `uri`: endpoint's path
+	* `method`: optional, endpoint's http method name
+	* `use`: optional, expressjs middleware(s) associated with endpoint, could be useful to serve static files or code specific behaviour like ```endpoint('configs', { uri: '/configs', use: express.static(path.join(__dirname, './')) });```
+	
+	
 ## mock
 
-## config
+
 
 ## server
