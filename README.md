@@ -53,7 +53,7 @@ const people = [
 
 vibe.default('Main', mock => {
   mock('people')
-    .checkHeader({ 'content-Type': /application\/json/ })
+    .checkHeader({ 'x-corporis': /^\d+-\w+$/ })
     .reply([200, people]);
 });
 
@@ -99,6 +99,7 @@ With DSL api we will use the embendded server and will setup trip library with s
 * `errorCode`: optional, http status code to return when an `endpoint` matches without a `mock`.
 * `vibes`: glob partern to select vibe's files to load (see below) ex : `path.join(__dirname, './data/**/*.vibes.js')` or just `path.join(__dirname, './vibes.js')`
 * `endpoint`: glob partern to select endpoint's files to load (see below)
+* `globals`: optional, data injected to vibes (see below) to share states between http calls and vibes.
 
 trip's server must be launched with: ``` $ DEBUG=trip* npx trip-server --config ./trip.config.js ```
 
@@ -109,14 +110,15 @@ Server can be also setup and launched thanks { initTrip, initServer, runServer }
 
 `endpoint` files are used to define ..., endpoints, aka `expressjs` routes.
 
-ex:
-
 ```
 	const { endpoint } = require('trip-mock');
-	endpoint('people', { uri: '/public/v0/people', method: 'get' });
+	endpoint('people:list', { uri: '/public/v0/people', method: 'get' });
+	endpoint('people:get', { uri: '/public/v0/people/:id', method: 'get' });
+	endpoint('people:create', { uri: '/public/v0/people', method: 'post' });
+	endpoint('people:update', { uri: '/public/v0/people/:id', method: 'patch' });
 ```
 
-This call to `endpoint` will register an expressjs route on GET '/public/v0/people'
+ex: First call to `endpoint` will register an expressjs route on GET '/public/v0/people'
 
 **function endpoint(name, params)**
 * `name`: String to identify an endpoint
@@ -126,8 +128,35 @@ This call to `endpoint` will register an expressjs route on GET '/public/v0/peop
 	* `use`: optional, expressjs middleware(s) associated with endpoint, could be useful to serve static files or code specific behaviour like ```endpoint('configs', { uri: '/configs', use: express.static(path.join(__dirname, './')) });```
 	
 	
+## vibe
+
+`endpoints` are useless without `mocks`, an endpoint will be associated with many vibes made of mocks:
+
+```
+const personSchema = { 
+	firstname: /\w+/,
+	lastname: /\w+/
+};
+	
+vibe('Main', mock => { 
+	mock('people:list').reply([200, people]);
+	mock('people:get').checkParams({ id: /\d+/ }).reply([200, person]);
+	mock('people:create').checkBoby(personSchema).reply([200, person]);
+	mock('people:update').checkParams({ id: /\d+/ }).checkBoby(personSchema).reply([200, person]);
+});
+```
+
+**function vibe(name, fn, options) or vibe.default(name, fn)**
+* `name`: String **must** match an existing `endpoint`
+* `options`: { isDefault }, set vibe as default
+* `fn`: function(mock, { globals, lget })
+	* `mock`: function to define new mocks (see below)
+	* `lget`: TODO[lset/lget]
+	
+returns the current `trip`.
+
+A default `vibe` will be the one used to search mocks, to switch to another one use `trip#select(name)`.
+
 ## mock
-
-
 
 ## server
