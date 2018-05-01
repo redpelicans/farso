@@ -151,12 +151,54 @@ vibe('Main', mock => {
 * `options`: { isDefault }, set vibe as default
 * `fn`: function(mock, { globals, lget })
 	* `mock`: function to define new mocks (see below)
+	* `globals`: config's `globals` property 
 	* `lget`: TODO[lset/lget]
 	
 returns the current `trip`.
 
 A default `vibe` will be the one used to search mocks, to switch to another one use `trip#select(name)`.
 
+trip's server offers a minimalist http api to list existing vibes:
+
+```
+$ curl http://[host:port]/_vibes_
+{
+	currentVibe: "Main",
+	vibes: [
+		"Main", "Wrong_auth"
+	]
+}
+```
+
+and select one:
+
+```
+$ curl http://[host:port]/_vibes_/Wrong_auth
+{
+	currentVibe: "Wrong_auth"
+}
+```
+
 ## mock
 
+### checkParams
+
+### checkHeaders
+
+### checkQuery
+
+### checkBody
+
+### reply
+
+### lset
+
+# Low level API
+
 ## server
+
+## trip
+
+## vibe
+
+
