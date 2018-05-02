@@ -1,7 +1,7 @@
 # farso
 
 [![Build Status](https://travis-ci.org/redpelicans/farso.svg?branch=develop)](https://travis-ci.org/redpelicans/farso)
-
+[![Coverage Status](https://coveralls.io/repos/github/redpelicans/farso/badge.svg?branch=develop)](https://coveralls.io/github/redpelicans/farso?branch=develop)
 
 `farso` is an HTTP mocking library for nodeJS.
 
