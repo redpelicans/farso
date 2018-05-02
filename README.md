@@ -29,7 +29,7 @@ Then manually or from your testing framework you can select the desired vibe and
 $ npm install farso
 ```
 
-# 'farso mock' at first glance
+# farso at first glance
 
 Let's say your system is using a CRM backoffice with an HTTP API offering an endpoint `GET /public/v0/people`.
 
