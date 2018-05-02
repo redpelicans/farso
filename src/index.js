@@ -262,22 +262,27 @@ class Trip extends EventEmitter {
       });
     }
     this.emit('endpoint.added', endpoint);
+    return this;
   }
 
   registerEndpoints() {
     compose(forEach(endpoint => this.registerEndpoint(endpoint)), values)(this.endpoints);
+    return this;
   }
 
   createEndpoint(name, config) {
     if (this.endpoints[name]) throw new Error(`Endpoint ${name} is already defined!`);
     this.endpoints[name] = new Endpoint({ name, ...config });
+    return this;
   }
 
   createVibe(name, fn, params) {
     const vibe = this.vibes[name] || new Vibe(name, this, params);
     this.emit(this.vibes[name] ? 'vibe.updating' : 'vibe.adding', vibe);
     this.vibes[name] = vibe;
+    if (vibe.isDefault) this.currentVibe = vibe;
     fn(mockMaker(vibe), { lget: localGetter(vibe), globals: this.globals });
+    return this;
   }
 
   getEndpoint(name) {
@@ -293,6 +298,7 @@ class Trip extends EventEmitter {
     if (!vibe) throw new Error(`Unkown vibe '${name}'`);
     this.currentVibe = vibe;
     this.emit('vibe.selected', vibe);
+    return this;
   }
 
   loadConfig() {
@@ -300,6 +306,7 @@ class Trip extends EventEmitter {
     endpointFiles.forEach(file => require(file));
     const tripFiles = glob.sync(path(['config', 'vibes'], this));
     tripFiles.forEach(file => require(file));
+    return this;
   }
 
   start(name) {
@@ -309,6 +316,7 @@ class Trip extends EventEmitter {
     if (!vibe && name) throw new Error(`Unkown vibe '${name}'`);
     this.currentVibe = vibe;
     this.emit('vibe.selected', vibe);
+    return this;
   }
 
   listVibes() {

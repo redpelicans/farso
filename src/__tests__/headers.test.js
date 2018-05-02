@@ -8,6 +8,7 @@ let trip;
 const initTrip = () => {
   trip = Trip({ errorCode });
   trip.createEndpoint('test', { uri: '/test', method: 'get' });
+  trip.registerEndpoints();
   return Promise.resolve({ trip });
 };
 
@@ -19,15 +20,13 @@ afterAll(() => ctx.server.close());
 
 describe('Headers', () => {
   it('should check header with regexp', () => {
-    trip.createVibe(
-      't1',
-      mock =>
+    trip
+      .createVibe('t1', mock =>
         mock('test')
           .checkHeader({ 'x-test': /^12/ })
           .reply(200),
-      { isDefault: true },
-    );
-    trip.start();
+      )
+      .select('t1');
     return axios({ method: 'get', url: `${ctx.server.url}/test`, headers: { 'X-test': '123' } });
   });
 
@@ -36,38 +35,38 @@ describe('Headers', () => {
       'X-test': '123',
       'Y-test': '456',
     };
-    trip.createVibe('t2', mock =>
-      mock('test')
-        .checkHeader(headers)
-        .reply(200),
-    );
-    trip.start('t2');
+    trip
+      .createVibe('t2', mock =>
+        mock('test')
+          .checkHeader(headers)
+          .reply(200),
+      )
+      .select('t2');
     return axios({ method: 'get', url: `${ctx.server.url}/test`, headers });
   });
 
   it('should not check header with data', () => {
-    const headers = {
-      'X-test': '123',
-      'Y-test': '456',
-    };
-    trip.createVibe('t3', mock =>
-      mock('test')
-        .checkHeader({ test: '123' })
-        .reply(200),
-    );
-    trip.start('t3');
+    const headers = { 'X-test': '123', 'Y-test': '456' };
+    trip
+      .createVibe('t3', mock =>
+        mock('test')
+          .checkHeader({ test: '123' })
+          .reply(200),
+      )
+      .select('t3');
     return axios({ method: 'get', url: `${ctx.server.url}/test`, headers }).catch(error =>
       expect(error.response.status).toEqual(errorCode),
     );
   });
 
   it('should check header with function', () => {
-    trip.createVibe('t4', mock =>
-      mock('test')
-        .checkHeader(headers => headers['x-test'] === '123')
-        .reply(200),
-    );
-    trip.start('t4');
+    trip
+      .createVibe('t4', mock =>
+        mock('test')
+          .checkHeader(headers => headers['x-test'] === '123')
+          .reply(200),
+      )
+      .select('t4');
     return axios({ method: 'get', url: `${ctx.server.url}/test`, headers: { 'X-test': '123' } });
   });
 });

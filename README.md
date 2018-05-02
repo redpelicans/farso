@@ -1,50 +1,50 @@
-# trip-mock
+# farso
 
-[![Build Status](https://travis-ci.org/redpelicans/trip.svg?branch=develop)](https://travis-ci.org/redpelicans/trip)
+[![Build Status](https://travis-ci.org/redpelicans/farso.svg?branch=develop)](https://travis-ci.org/redpelicans/farso)
 
 
-`trip-mock` is an HTTP mocking library for nodeJS.
+`farso` is an HTTP mocking library for nodeJS.
 
-`trip-mock` is mainly used to craft e2e/human tests of HTTP services.
+`farso` is mainly used to craft e2e/human tests of HTTP services.
 
 # How does it work?
 
-`trip-mock` is made for developers and avoid the use of tons of json files to setup mocks, it offers a comprehensive DSL and a low level api based on [expressjs](http://expressjs.com) so developers can precisely tweak their mock services to their needs where DSL do not cover use cases.
+`farso` is made for developers and avoid the use of tons of json files to setup mocks, it offers a comprehensive DSL and a low level api based on [expressjs](http://expressjs.com) so developers can precisely tweak their mock services to their needs where DSL do not cover use cases.
 
-Mocking with `trip-mock` invite you to travel in different vibes!
+Mocking with `farso` invite you to travel in different vibes!
 
 First of all, you have to define destinations (`endpoints`) you want to mock.
 
-Then define all the `vibes` (scenarios) of your trip.
+Then define all the `vibes` (scenarios) of your farso.
 
 A `vibe` is made of mocks (mocked endpoints). Definition of mocks are inspired by [nock](https://github.com/node-nock/nock)
 
-`trip-mock` library is bundled with an http server api (also bin script) to run your vibes.
+`farso` library is bundled with an http server api (also bin script) to run your vibes.
 
 Then manually or from your testing framework you can select the desired vibe and run tests on it, change the vibe and ...
 
 # Install
 
 ```
-$ npm install trip-mock
+$ npm install farso
 ```
 
-# 'trip mock' at first glance
+# 'farso mock' at first glance
 
 Let's say your system is using a CRM backoffice with an HTTP API offering an endpoint `GET /public/v0/people`.
 
 You have to mock this endpoint.
 
-First install `trip-mock`, then add config files below: 
+First install `farso`, then add config files below: 
 
 ```
 // ./endpoints.js
 
-const { endpoint } = require('trip-mock');
+const { endpoint } = require('farso');
 endpoint('people', { uri: '/public/v0/people', method: 'get' });
 
 // vibes.js
-const { vibe } = require('trip-mock');
+const { vibe } = require('farso');
 const faker = require('faker');
 const people = [
   {id: 1, name: faker.name.lastName()},
@@ -58,7 +58,7 @@ vibe.default('Main', mock => {
 });
 
 
-// trip.config.js
+// farso.config.js
 module.exports = {
   host: 'localhost',
   // port: 8181,
@@ -70,11 +70,11 @@ module.exports = {
 Then run:
 
 ```
-$ DEBUG=trip* npx trip-server --config ./trip.config.js 
-  trip Creating Vibe 'Main'
-  trip Endpoint 'people:/public/v0/people' created
-  trip Vibe 'Main' is now active
-  trip server started on 'http://localhost:33811'
+$ DEBUG=farso* npx farso-server --config ./farso.config.js 
+  farso Creating Vibe 'Main'
+  farso Endpoint 'people:/public/v0/people' created
+  farso Vibe 'Main' is now active
+  farso server started on 'http://localhost:33811'
 ```
 
 And now:
@@ -84,7 +84,7 @@ $ curl http://localhost:33811/public/v0/people
 [{"id":1,"name":"Mohr"},{"id":2,"name":"Muller"}]                  
 ```
 
-Here it is, you made your first trip mock.
+Here it is, you made your first farso mock.
 
 # API
 
