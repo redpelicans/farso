@@ -90,7 +90,7 @@ Here it is, you made your first farso mock.
 
 ## config
 
-With DSL api we will use the embendded server and will setup trip library with setup files like above sample. 
+With DSL api we will use the embendded server and will setup farso library with setup files like above sample. 
 
 `config` file must export and object with those properties:
 
@@ -101,17 +101,17 @@ With DSL api we will use the embendded server and will setup trip library with s
 * `endpoint`: glob partern to select endpoint's files to load (see below)
 * `globals`: optional, data injected to vibes (see below) to share states between http calls and vibes.
 
-trip's server must be launched with: ``` $ DEBUG=trip* npx trip-server --config ./trip.config.js ```
+farso's server must be launched with: ``` $ DEBUG=farso* npx farso-server --config ./farso.config.js ```
 
 Server can be also setup and launched thanks { initTrip, initServer, runServer } functions exported from 
-'trip-mock/server' (see Low Level API section below)
+'farso-mock/server' (see Low Level API section below)
 
 ## endpoint
 
 `endpoint` files are used to define ..., endpoints, aka `expressjs` routes.
 
 ```
-	const { endpoint } = require('trip-mock');
+	const { endpoint } = require('farso-mock');
 	endpoint('people:list', { uri: '/public/v0/people', method: 'get' });
 	endpoint('people:get', { uri: '/public/v0/people/:id', method: 'get' });
 	endpoint('people:create', { uri: '/public/v0/people', method: 'post' });
@@ -154,11 +154,11 @@ vibe('Main', mock => {
 	* `globals`: config's `globals` property 
 	* `lget`: TODO[lset/lget]
 	
-returns the current `trip`.
+returns the current `farso`.
 
-A default `vibe` will be the one used to search mocks, to switch to another one use `trip#select(name)`.
+A default `vibe` will be the one used to search mocks, to switch to another one use `farso#select(name)`.
 
-trip's server offers a minimalist http api to list existing vibes:
+farso's server offers a minimalist http api to list existing vibes:
 
 ```
 $ curl http://[host:port]/_vibes_
@@ -197,7 +197,7 @@ $ curl http://[host:port]/_vibes_/Wrong_auth
 
 ## server
 
-## trip
+## farso
 
 ## vibe
 
