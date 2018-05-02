@@ -1,14 +1,12 @@
 language: node_js
 node_js:
   - "9.4"
-install:
-  - npm install -g coveralls
-after_script:
-  - npm run test -- --coverage
+script:
+  - "yarn test --coverage"
 notifications:
   slack:
     rooms:
       redpelicans:xCuMR4Ld1A0cSDdgpgYtJvrW#schooljs
       redpelicans:xCuMR4Ld1A0cSDdgpgYtJvrW#ci
 after_script:
-  - "cat coverage/lcov.info | coveralls" 
+  - "npm install -g coveralls && cat coverage/lcov.info | coveralls" 
