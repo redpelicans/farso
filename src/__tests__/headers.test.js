@@ -1,26 +1,26 @@
 const axios = require('axios');
 const { initServer } = require('../server');
-const Trip = require('..');
+const Farso = require('..');
 
 const errorCode = 501;
 let ctx;
-let trip;
-const initTrip = () => {
-  trip = Trip({ errorCode });
-  trip.createEndpoint('test', { uri: '/test', method: 'get' });
-  trip.registerEndpoints();
-  return Promise.resolve({ trip });
+let farso;
+const initFarso = () => {
+  farso = Farso({ errorCode });
+  farso.createEndpoint('test', { uri: '/test', method: 'get' });
+  farso.registerEndpoints();
+  return Promise.resolve({ farso });
 };
 
 beforeAll(() =>
-  initTrip()
+  initFarso()
     .then(initServer)
     .then(c => (ctx = c)));
 afterAll(() => ctx.server.close());
 
 describe('Headers', () => {
   it('should check header with regexp', () => {
-    trip
+    farso
       .createVibe('t1', mock =>
         mock('test')
           .checkHeader({ 'x-test': /^12/ })
@@ -35,7 +35,7 @@ describe('Headers', () => {
       'X-test': '123',
       'Y-test': '456',
     };
-    trip
+    farso
       .createVibe('t2', mock =>
         mock('test')
           .checkHeader(headers)
@@ -47,7 +47,7 @@ describe('Headers', () => {
 
   it('should not check header with data', () => {
     const headers = { 'X-test': '123', 'Y-test': '456' };
-    trip
+    farso
       .createVibe('t3', mock =>
         mock('test')
           .checkHeader({ test: '123' })
@@ -60,7 +60,7 @@ describe('Headers', () => {
   });
 
   it('should check header with function', () => {
-    trip
+    farso
       .createVibe('t4', mock =>
         mock('test')
           .checkHeader(headers => headers['x-test'] === '123')

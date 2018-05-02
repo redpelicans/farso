@@ -2,13 +2,13 @@ language: node_js
 node_js:
   - "9.4"
 install:
-  - npm install -g codecov
+  - npm install -g coveralls
 after_script:
-  - npm run-script test
+  - npm run test -- --coverage
 notifications:
   slack:
     rooms:
       redpelicans:xCuMR4Ld1A0cSDdgpgYtJvrW#schooljs
       redpelicans:xCuMR4Ld1A0cSDdgpgYtJvrW#ci
-script:
-  - codecov
+after_script:
+  - "cat coverage/lcov.info | coveralls" 

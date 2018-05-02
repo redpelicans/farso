@@ -1,19 +1,19 @@
 const axios = require('axios');
 const { initServer } = require('../server');
-const Trip = require('..');
+const Farso = require('..');
 
 const errorCode = 502;
 let ctx;
-let trip;
-const initTrip = () => {
-  trip = Trip({ errorCode });
-  trip.createEndpoint('test', { uri: '/test/:a/:b/:c', method: 'post' });
-  trip.registerEndpoints();
-  return Promise.resolve({ trip });
+let farso;
+const initFarso = () => {
+  farso = Farso({ errorCode });
+  farso.createEndpoint('test', { uri: '/test/:a/:b/:c', method: 'post' });
+  farso.registerEndpoints();
+  return Promise.resolve({ farso });
 };
 
 beforeAll(() =>
-  initTrip()
+  initFarso()
     .then(initServer)
     .then(c => (ctx = c)));
 afterAll(() => ctx.server.close());
@@ -25,7 +25,7 @@ describe('Headers', () => {
       b: '11',
       c: 'abc',
     };
-    trip
+    farso
       .createVibe('v1', mock =>
         mock('test')
           .checkParams(params)
@@ -41,7 +41,7 @@ describe('Headers', () => {
       b: '11',
       c: /\w+/,
     };
-    trip
+    farso
       .createVibe('v2', mock =>
         mock('test')
           .checkParams(params)
@@ -53,7 +53,7 @@ describe('Headers', () => {
 
   it('should check params with function', () => {
     const params = params => 'c' in params;
-    trip
+    farso
       .createVibe('v3', mock =>
         mock('test')
           .checkParams(params)
@@ -65,7 +65,7 @@ describe('Headers', () => {
 
   it('should no check params with function', () => {
     const params = params => 'X' in params;
-    trip
+    farso
       .createVibe('v4', mock =>
         mock('test')
           .checkParams(params)

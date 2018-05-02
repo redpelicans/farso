@@ -199,9 +199,9 @@ const mockMaker = vibe => (name, description) => {
 };
 
 class Vibe {
-  constructor(name, trip, { isDefault } = {}) {
+  constructor(name, farso, { isDefault } = {}) {
     this.name = name;
-    this.trip = trip;
+    this.farso = farso;
     this.isDefault = isDefault;
     this.mocks = {};
     this.locals = {};
@@ -219,7 +219,7 @@ class Vibe {
   }
 
   getEndpoint(name) {
-    return this.trip.getEndpoint(name);
+    return this.farso.getEndpoint(name);
   }
 
   getMocks(name) {
@@ -227,19 +227,19 @@ class Vibe {
   }
 }
 
-const getEligibleMock = (trip, endpoint) => (req, res, next) => {
-  req.vibe = trip.currentVibe;
+const getEligibleMock = (farso, endpoint) => (req, res, next) => {
+  req.vibe = farso.currentVibe;
   if (!req.vibe) return next('route');
   const mocks = req.vibe.getMocks(endpoint.name);
   req.mock = find(mock => mock.isChecked(req))(mocks);
-  if (!req.mock) return res.sendStatus(trip.config.errorCode || 500);
+  if (!req.mock) return res.sendStatus(farso.config.errorCode || 500);
   req.vibe.setLocals(req.mock.doAssocs(req.vibe.locals, req));
   next();
 };
 
 const localGetter = vibe => fn => new LocalGetter(fn, vibe);
 
-class Trip extends EventEmitter {
+class Farso extends EventEmitter {
   constructor({ router, endpoints, vibes, globals, errorCode }) {
     super();
     this.router = router;
@@ -304,8 +304,8 @@ class Trip extends EventEmitter {
   loadConfig() {
     const endpointFiles = glob.sync(path(['config', 'endpoints'], this));
     endpointFiles.forEach(file => require(file));
-    const tripFiles = glob.sync(path(['config', 'vibes'], this));
-    tripFiles.forEach(file => require(file));
+    const farsoFiles = glob.sync(path(['config', 'vibes'], this));
+    farsoFiles.forEach(file => require(file));
     return this;
   }
 
@@ -324,9 +324,9 @@ class Trip extends EventEmitter {
   }
 }
 
-let trip;
-module.exports = config => (trip = new Trip({ ...config, router: express() }));
-module.exports.vibe = (name, fn, isDefault) => trip.createVibe(name, fn, { isDefault });
+let farso;
+module.exports = config => (farso = new Farso({ ...config, router: express() }));
+module.exports.vibe = (name, fn, isDefault) => farso.createVibe(name, fn, { isDefault });
 module.exports.vibe.default = (name, fn) => module.exports.vibe(name, fn, true);
-module.exports.endpoint = (name, config) => trip.createEndpoint(name, config);
+module.exports.endpoint = (name, config) => farso.createEndpoint(name, config);
 module.exports.deepMatch = deepMatch;

@@ -19,16 +19,16 @@ const globals = {
   },
 };
 
-const makeUrl = uri => `${tripServer.url}${uri}`;
+const makeUrl = uri => `${farsoServer.url}${uri}`;
 const config = {
   vibes: path.join(__dirname, '../../examples/api.vibe.js'),
   endpoints: path.join(__dirname, '../../examples/endpoints.js'),
   globals,
 };
 
-let tripServer;
-beforeAll(() => runServer(config).then(({ server }) => (tripServer = server)));
-afterAll(() => tripServer.close());
+let farsoServer;
+beforeAll(() => runServer(config).then(({ server }) => (farsoServer = server)));
+afterAll(() => farsoServer.close());
 
 describe('Test api', () => {
   it('should post /auth/v0/sms', () => {

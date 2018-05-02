@@ -1,15 +1,15 @@
 const axios = require('axios');
 const { initServer } = require('../server');
-const Trip = require('..');
+const Farso = require('..');
 
 const errorCode = 500;
 let ctx;
-let trip;
-const initTrip = () => {
-  trip = Trip({ errorCode });
-  trip.createEndpoint('test', { uri: '/test/:a', method: 'patch' });
-  trip.registerEndpoints();
-  trip.createVibe(
+let farso;
+const initFarso = () => {
+  farso = Farso({ errorCode });
+  farso.createEndpoint('test', { uri: '/test/:a', method: 'patch' });
+  farso.registerEndpoints();
+  farso.createVibe(
     'v1',
     mock =>
       mock('test')
@@ -17,7 +17,7 @@ const initTrip = () => {
         .reply(200),
     { isDefault: true },
   );
-  trip.createVibe(
+  farso.createVibe(
     'v1',
     mock =>
       mock('test')
@@ -25,11 +25,11 @@ const initTrip = () => {
         .reply(200),
     { isDefault: true },
   );
-  return Promise.resolve({ trip });
+  return Promise.resolve({ farso });
 };
 
 beforeAll(() =>
-  initTrip()
+  initFarso()
     .then(initServer)
     .then(c => (ctx = c)));
 afterAll(() => ctx.server.close());

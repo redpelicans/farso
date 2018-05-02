@@ -7,35 +7,35 @@ const cors = require('cors');
 const express = require('express');
 const debug = require('debug');
 const logger = require('morgan-debug');
-const Trip = require('.');
-const loginfo = debug('trip');
-const DEFAULT_CONFIG = './trip.config.js';
+const Farso = require('.');
+const loginfo = debug('farso');
+const DEFAULT_CONFIG = './farso.config.js';
 
-const listVibes = trip => (req, res) =>
+const listVibes = farso => (req, res) =>
   res.send({
-    currentVibe: trip.currentVibe && trip.currentVibe.name,
-    vibes: compose(pluck('name'))(trip.listVibes()),
+    currentVibe: farso.currentVibe && farso.currentVibe.name,
+    vibes: compose(pluck('name'))(farso.listVibes()),
   });
 
-const selectVibe = trip => (req, res) => {
+const selectVibe = farso => (req, res) => {
   const { vibe } = req.params;
-  trip.select(vibe);
-  res.send({ currentVibe: trip.currentVibe.name });
+  farso.select(vibe);
+  res.send({ currentVibe: farso.currentVibe.name });
 };
 
-const adminPath = '/_trips_';
+const adminPath = '/_vibes_';
 
 const initServer = ctx => {
-  const { host = 'localhost', port, trip } = ctx;
+  const { host = 'localhost', port, farso } = ctx;
   return new Promise((resolve, reject) => {
     const app = express();
     app.use(cors());
     app.use(express.json());
     app.use(express.urlencoded());
-    app.get(`${adminPath}/:vibe`, selectVibe(trip));
-    app.get(adminPath, listVibes(trip));
-    app.use(logger('trip', 'dev'));
-    app.use(trip.router);
+    app.get(`${adminPath}/:vibe`, selectVibe(farso));
+    app.get(adminPath, listVibes(farso));
+    app.use(logger('farso', 'dev'));
+    app.use(farso.router);
     const srv = app.listen(port, host, err => {
       if (err) return reject(err);
       const { port: sport } = srv.address();
@@ -47,32 +47,32 @@ const initServer = ctx => {
   });
 };
 
-const initTrip = ctx => {
+const initFarso = ctx => {
   const { endpoints, vibes, globals } = ctx;
-  const trip = Trip({
+  const farso = Farso({
     endpoints,
     vibes,
     globals,
   });
-  trip.on('mock.error', ({ message, data }) => {
+  farso.on('mock.error', ({ message, data }) => {
     loginfo(message);
     console.log(data); // eslint-disable-line no-console
   });
-  trip.on('endpoint.selected', (vibe, endpoint) => loginfo(`Endpoint '${endpoint.getLabel(vibe)}' selected`));
-  trip.on('mock.visited', mock => loginfo(`Mock '${mock.getLabel()}' visited`));
-  trip.on('endpoint.added', endpoint => loginfo(`Endpoint '${endpoint.getLabel()}' created`));
-  trip.on('vibe.adding', vibe => loginfo(`Adding Vibe '${vibe.name}'`));
-  trip.on('vibe.updating', vibe => loginfo(`Updating Vibe '${vibe.name}'`));
-  trip.on('vibe.selected', vibe => loginfo(`Vibe '${vibe.name}' is now active`));
-  return Promise.resolve({ ...ctx, trip });
+  farso.on('endpoint.selected', (vibe, endpoint) => loginfo(`Endpoint '${endpoint.getLabel(vibe)}' selected`));
+  farso.on('mock.visited', mock => loginfo(`Mock '${mock.getLabel()}' visited`));
+  farso.on('endpoint.added', endpoint => loginfo(`Endpoint '${endpoint.getLabel()}' created`));
+  farso.on('vibe.adding', vibe => loginfo(`Adding Vibe '${vibe.name}'`));
+  farso.on('vibe.updating', vibe => loginfo(`Updating Vibe '${vibe.name}'`));
+  farso.on('vibe.selected', vibe => loginfo(`Vibe '${vibe.name}' is now active`));
+  return Promise.resolve({ ...ctx, farso });
 };
 
 const runServer = config =>
-  initTrip(config)
+  initFarso(config)
     .then(initServer)
     .then(ctx => {
-      ctx.trip.loadConfig();
-      ctx.trip.start();
+      ctx.farso.loadConfig();
+      ctx.farso.start();
       return ctx;
     });
 
@@ -82,4 +82,4 @@ if (require.main === module) {
   runServer(config).catch(console.error); // eslint-disable-line no-console
 }
 
-module.exports = { runServer, initTrip, initServer };
+module.exports = { runServer, initFarso, initServer };

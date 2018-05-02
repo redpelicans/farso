@@ -26,9 +26,10 @@
     "ramda": "^0.25.0"
   },
   "scripts": {
+    "dist:add": "git add index.js server.js",
     "dist": "babel src -d . --ignore __tests__/*.js",
     "start:server": "DEBUG=farso* nodemon --watch examples --watch ./index ./server.js",
-    "test": "DEBUG=farso* jest src/*",
+    "test": "DEBUG=Xfarso* jest src/*",
     "lint:staged": "lint-staged",
     "lint:eslint": "eslint --ignore-pattern '!.eslintrc.js'"
   },
@@ -41,7 +42,8 @@
   },
   "pre-commit": [
     "lint:staged",
-    "dist"
+    "dist",
+    "dist:add"
   ],
   "devDependencies": {
     "axios": "^0.18.0",
