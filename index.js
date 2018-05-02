@@ -536,6 +536,7 @@ var Trip = (function(_EventEmitter) {
         var vibe = this.vibes[name] || new Vibe(name, this, params);
         this.emit(this.vibes[name] ? 'vibe.updating' : 'vibe.adding', vibe);
         this.vibes[name] = vibe;
+        if (vibe.isDefault) this.currentVibe = vibe;
         fn(mockMaker(vibe), { lget: localGetter(vibe), globals: this.globals });
         return this;
       },
@@ -573,7 +574,7 @@ var Trip = (function(_EventEmitter) {
         tripFiles.forEach(function(file) {
           return require(file);
         });
-        return vibe;
+        return this;
       },
     },
     {
@@ -585,7 +586,7 @@ var Trip = (function(_EventEmitter) {
         if (!vibe && name) throw new Error("Unkown vibe '" + name + "'");
         this.currentVibe = vibe;
         this.emit('vibe.selected', vibe);
-        return vibe;
+        return this;
       },
     },
     {

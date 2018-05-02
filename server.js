@@ -48,7 +48,7 @@ var selectVibe = function selectVibe(trip) {
   };
 };
 
-var adminPath = '/_vibes_';
+var adminPath = '/_trips_';
 
 var initServer = function initServer(ctx) {
   var _ctx$host = ctx.host,

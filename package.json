@@ -39,7 +39,10 @@
       "yarn lint:eslint"
     ]
   },
-  "pre-commit": "lint:staged",
+  "pre-commit": [
+    "lint:staged",
+    "dist"
+  ],
   "devDependencies": {
     "axios": "^0.18.0",
     "babel-cli": "^6.26.0",
