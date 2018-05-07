@@ -1,4 +1,5 @@
 const {
+  concat,
   assocPath,
   reduce,
   forEach,
@@ -228,12 +229,15 @@ class Vibe {
 }
 
 const getEligibleMock = (farso, endpoint) => (req, res, next) => {
-  req.vibe = farso.currentVibe;
-  if (!req.vibe) return next('route');
-  const mocks = req.vibe.getMocks(endpoint.name);
+  const [currentVibe, defaultVibe] = [farso.currentVibe, farso.getDefaultVibe()];
+  if (!currentVibe) return next('route');
+  const mocks = concat(
+    (currentVibe && currentVibe.getMocks(endpoint.name)) || [],
+    (defaultVibe && defaultVibe.getMocks(endpoint.name)) || [],
+  );
   req.mock = find(mock => mock.isChecked(req))(mocks);
   if (!req.mock) return res.sendStatus(farso.config.errorCode || 500);
-  req.vibe.setLocals(req.mock.doAssocs(req.vibe.locals, req));
+  currentVibe.setLocals(req.mock.doAssocs(currentVibe.locals, req));
   next();
 };
 
