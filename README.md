@@ -132,7 +132,7 @@ ex: First call to `endpoint` will register an expressjs route on GET '/public/v0
 	
 ## vibe
 
-`endpoints` are useless without `mocks`, an endpoint will be associated with many vibes made of mocks:
+`endpoints` are useless without `vibe`, an endpoint will be associated with many vibes made of mocks:
 
 ```
 const personSchema = { 
@@ -158,7 +158,7 @@ vibe('Main', mock => {
 	
 returns the current `farso`.
 
-A default `vibe` will be the one used to search mocks, to switch to another one use `farso#select(name)`.
+A default `vibe` will become the current one to search mocks, to switch to another one use `farso#select(name)` or HTTP API.
 
 When a non default `vibe` is selected, eligible mocks are first searched in former `vibe` then in the default one.
 
@@ -214,15 +214,72 @@ vibe('V1', mock => mock('people:get').checkParams({ id: '12'}).reply([200, perso
 vibe('V1', mock => 	mock('people:get').checkParams({ id: '13'}).reply(404));
 ```
 
+Order of definition matters.
+
+
+We can define many mocks for the same `endpoint` in many vibes, in case you overwrite a mock already defined in the default endpoint, former wil be used. With a default `vibe`, an eligible mock is first look into current vibe, then if not found, in the default one.
+
+
 ### checkParams
+
+Check url [params](https://expressjs.com/en/4x/api.html#req.params)
+
+Ex: param `id`
+
+```
+endpoint('people:get', { uri: '/public/v0/people/:a/:b', method: 'get' });
+vibe('V1', mock =>  {
+	mock('people:get')
+		.checkParams({ a: '12', b: '13'})
+		.checkParams({ a: /\d+/ b: :\w+X$/})
+		.checkParams(({ a }) => Number(a) < 5)
+		.reply(200);
+})
+```
+
+endpoint's `uri` property use expressjs route's syntax definition.
+
+**function checkParams(options)**
+* `options`: Object | Function
+	* Object: if key/value do not match req.params `mock` will not be eligible, values can be a String or a RegExp
+	* Function: `function(params): Boolean`, if returns false `mock` will not be eligible.
+
+returns the current `mock`.
 
 ### checkHeaders
 
+**function checkHeaders(options)**
+* `options`: Object | Function
+	* Object: if key/value do not match sent headers `mock` will not be eligible, values can be a String or a RegExp, keys are converted to lower case.
+	* Function: `function(headers): Boolean`, if it returns false `mock` will not be eligible.
+
+
 ### checkQuery
+
+**function checkQuery(options)**
+* `options`: Object | Function
+	* Object: if key/value do not match [req.body](https://expressjs.com/en/4x/api.html#req.body) `mock` will not be eligible, values can be a String or a RegExp.
+	* Function: `function(query): Boolean`, if it returns false `mock` will not be eligible.
+
 
 ### checkBody
 
+**function checkBody(options)**
+* `options`: Object | Function
+	* Object: if key/value do not **deeply** match [req.query](https://expressjs.com/en/4x/api.html#req.query) `mock` will not be eligible, values can be a String or a RegExp. Object can be a nested object, is this case comparaison will be made using `farso.deepMatch`.
+	* Function: `function(body): Boolean`, if it returns false `mock` will not be eligible.
+
 ### reply
+
+Function executed when a mock is eligible.
+
+**function reply(options)**
+* options: Number | Function | Array
+	* Number: status code to return: ``` res.sendStatus(options)```
+	* Array: [status, data]: ```res.status(options[0]).send(options[1])```
+	* Function: `function(req, res)`
+
+returns current `mock`
 
 ### lset
 
