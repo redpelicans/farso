@@ -90,8 +90,7 @@ function _classCallCheck(instance, Constructor) {
 }
 
 var _require = require('ramda'),
-  filter = _require.filter,
-  isEmpty = _require.isEmpty,
+  concat = _require.concat,
   assocPath = _require.assocPath,
   reduce = _require.reduce,
   forEach = _require.forEach,
@@ -453,20 +452,16 @@ var getEligibleMock = function getEligibleMock(farso, endpoint) {
       currentVibe = _ref13[0],
       defaultVibe = _ref13[1];
 
-    if (!currentVibe && !defaultVibe) return next('route');
+    if (!currentVibe) return next('route');
     var mocks = concat(
       (currentVibe && currentVibe.getMocks(endpoint.name)) || [],
       (defaultVibe && defaultVibe.getMocks(endpoint.name)) || [],
     );
-    req.mock =
-      find(function(mock) {
-        return mock.isChecked(req);
-      })(mocks) ||
-      find(function(mock) {
-        return mock.isChecked(req);
-      })(mocks);
+    req.mock = find(function(mock) {
+      return mock.isChecked(req);
+    })(mocks);
     if (!req.mock) return res.sendStatus(farso.config.errorCode || 500);
-    req.vibe.setLocals(req.mock.doAssocs(req.vibe.locals, req));
+    currentVibe.setLocals(req.mock.doAssocs(currentVibe.locals, req));
     next();
   };
 };
