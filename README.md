@@ -103,6 +103,26 @@ With DSL api we will use the embendded server and will setup farso library with 
 * `endpoint`: glob partern to select endpoint's files to load (see below)
 * `globals`: optional, data injected to vibes (see below) to share states between http calls and vibes.
 
+
+```
+const path = require('path');
+const faker = require('faker');
+
+module.exports = {
+  host: 'localhost',
+  port: 8181,
+  vibes: path.join(__dirname, './mock/**/*.vibe.js'),
+  endpoints: path.join(__dirname, './mock/endpoints.js'),
+  globals: {
+    api: {
+      clientId: faker.random.uuid(),
+      clientSecret: faker.random.uuid(),
+    },
+  },
+};
+
+```
+
 farso's server must be launched with: ``` $ DEBUG=farso* npx farso-server --config ./farso.config.js ```
 
 Server can be also setup and launched thanks { initTrip, initServer, runServer } functions exported from 
@@ -140,12 +160,12 @@ const personSchema = {
 	lastname: /\w+/
 };
 	
-vibe('Main', mock => { 
+vibe('Main', (mock, {globals: { api: { clientId, clientSecret } } }) => { 
 	mock('people:list').reply([200, people]);
 	mock('people:get').checkParams({ id: /\d+/ }).reply([200, person]);
 	mock('people:create').checkBoby(personSchema).reply([200, person]);
 	mock('people:update').checkParams({ id: /\d+/ }).checkBoby(personSchema).reply([200, person]);
-});
+})
 ```
 
 **function vibe(name, fn, options) or vibe.default(name, fn)**
@@ -248,6 +268,8 @@ returns the current `mock`.
 
 ### checkHeaders
 
+Check that requested headers match request.
+
 **function checkHeaders(options)**
 * `options`: Object | Function
 	* Object: if key/value do not match sent headers `mock` will not be eligible, values can be a String or a RegExp, keys are converted to lower case.
@@ -256,6 +278,8 @@ returns the current `mock`.
 
 ### checkQuery
 
+Check that requested query match request.
+
 **function checkQuery(options)**
 * `options`: Object | Function
 	* Object: if key/value do not match [req.body](https://expressjs.com/en/4x/api.html#req.body) `mock` will not be eligible, values can be a String or a RegExp.
@@ -263,6 +287,8 @@ returns the current `mock`.
 
 
 ### checkBody
+
+Check that requested body match request.
 
 **function checkBody(options)**
 * `options`: Object | Function
@@ -281,7 +307,73 @@ Function executed when a mock is eligible.
 
 returns current `mock`
 
-### lset
+### lset/lget
+
+`lset/lget` allow to manage a global context between requests.
+
+We can share global data thanks to `globals` prop in config and use it in vibes definition:
+
+```
+// farso.config.js
+const path = require('path');
+const faker = require('faker');
+
+module.exports = {
+  host: 'localhost',
+  port: 8181,
+  vibes: path.join(__dirname, './examples/**/*.vibe.js'),
+  endpoints: path.join(__dirname, './examples/endpoints.js'),
+  globals: {
+    api: {
+      clientId: faker.random.uuid(),
+      clientSecret: faker.random.uuid(),
+    },
+  },
+};
+
+// main.vibe.js
+
+vibe('Main', (mock, globals)  => { 
+	mock('people:list').reply((req, res) => {
+		globals.propA = valueA;
+		res.send(200);
+	});
+})
+
+```
+
+But to avoid dirty side effect here comes `lset/lget`:
+
+```
+const { path } = require('ramda');
+
+vibe.default('Main', (mock, { lget, globals: { token }}) => {
+
+  mock('token')
+    .lset(({ body }) => [['data', 'firstname'], body.firstname])
+    .lset(({ body }) => [['data', 'lastname'], body.lastname])
+    .reply([201, token]);
+
+  const req_create_claim = {
+    firstname: lget(path(['data', 'firstname'])),
+   	lastname: lget(path(['data', 'lastname'])),
+  };
+
+  mock('claim:create')
+    .checkBody(req_create_claim)
+    .lset(({ body }) => [['data', 'claim'], body])
+    .reply(201);
+```
+
+**function lget(fn)**
+* fn: `function(Object): Object`, returns data from `globals`
+use case: ```lget(path(['data', 'lastname']))``` returns ```globals.data.lastname```
+We can use any path selector outside ramda
+
+**function lset(fn)**
+* fn: `function(req): returns [path, value]`
+Use case : ```mock('token').lset(({ body }) => [['data', 'firstname'], body.firstname])``` will  exec ``` globals.data.firstname = body.firstname```
+
 
 # Low level API
 
