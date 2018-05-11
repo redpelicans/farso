@@ -379,8 +379,65 @@ Use case : ```mock('token').lset(({ body }) => [['data', 'firstname'], body.firs
 
 ## server
 
+`farso` server can be launched thanks to `farso-server` script, like:
+
+```
+$ DEBUG=farso* npx farso-server --config ./farso.config.js
+```
+
+But also with API entries, it could be useful if we want to start a mock server within test and not before:
+
+```
+const { runServer } = require('farso/server');
+
+let farsoServer;
+
+const config = {
+  vibes: path.join(__dirname, '../../examples/api.vibe.js'),
+  endpoints: path.join(__dirname, '../../examples/endpoints.js'),
+  globals,
+};
+
+beforeAll(() => runServer(config).then(({ server }) => (farsoServer = server)));
+afterAll(() => farsoServer.close());
+```
+
+
 ## farso
 
-## vibe
+We can dynamically register `endpoints` and create `vibes`, see unit tests for different samples.
+
+```
+const { initServer } = require('farso/server');
+const Farso = require('farso');
+
+let ctx;
+let farso;
+const initFarso = () => {
+  farso = Farso({ errorCode });
+  farso.createEndpoint('test', { uri: '/test', method: 'post' });
+  farso.registerEndpoints();
+  return Promise.resolve({ farso });
+};
+
+beforeAll(() =>
+  initFarso()
+    .then(initServer)
+    .then(c => (ctx = c)));
+afterAll(() => ctx.server.close());
+
+describe('...', () => {
+  it('should ...', () => {
+    farso
+      .createVibe('v1', mock => mock('test').reply(200))
+      .select('v1');
+    return axios({ method: 'post', url: `${ctx.server.url}/test` });
+  });
+
+```
+
+
+That's all folks...
+
 
 
