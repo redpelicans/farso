@@ -13,7 +13,7 @@
 
 Mocking with `farso` invite you to travel in different vibes!
 
-First of all, you have to define destinations (`endpoints`) you want to mock.
+First of all, you have to define `endpoints` (destinations) you want to mock.
 
 Then define all the `vibes` (scenarios) of your farso.
 
@@ -21,7 +21,9 @@ A `vibe` is made of mocks (mocked endpoints). Definition of mocks are inspired b
 
 `farso` library is bundled with an http server api (also bin script) to run your vibes.
 
-Then manually or from your testing framework you can select the desired vibe and run tests on it, change the vibe and ...
+Then manually or from your testing framework you can select the desired vibe and request endpoints, `farso` will try to select an eligible mock and execute it. Because many `mocks` can be associated to an `endpoint`, `farso` will in the order of definition run the fisrt that matches (see check methods below). If no eligible `mock` matches in current vibe `farso` will search in the default vibe to look for one.
+
+Run tests on it, change the vibe and ...
 
 # Install
 
@@ -158,6 +160,8 @@ returns the current `farso`.
 
 A default `vibe` will be the one used to search mocks, to switch to another one use `farso#select(name)`.
 
+When a non default `vibe` is selected, eligible mocks are first searched in former `vibe` then in the default one.
+
 farso's server offers a minimalist http api to list existing vibes:
 
 ```
@@ -180,6 +184,35 @@ $ curl http://[host:port]/_vibes_/Wrong_auth
 ```
 
 ## mock
+
+A `mock` defines the behaviour of an `endpoint`:
+
+```
+vibe('V1', mock => mock('people:list').reply(200));
+```
+Requesting endpoint 'people:list' will return HTTP status code 200.
+
+We can define many mocks per `endpoint`:
+
+```
+vibe('V1', mock => {
+	mock('people:list').reply(200);
+	mock('people:get').reply([200, person]);
+});
+```
+or like this:
+
+```
+vibe('V1', mock => mock('people:list').reply(200));
+vibe('V1', mock => 	mock('people:get').reply([200, person]));
+```
+
+We can define many mocks for the same `endpoint`:
+
+```
+vibe('V1', mock => mock('people:get').checkParams({ id: '12'}).reply([200, person]));
+vibe('V1', mock => 	mock('people:get').checkParams({ id: '13'}).reply(404));
+```
 
 ### checkParams
 
