@@ -32,7 +32,6 @@ class LocalGetter {
   }
 
   equals(v) {
-    console.log(this.getValue(), v, this);
     return this.getValue() === v;
   }
 
@@ -183,7 +182,6 @@ class Mock {
       this.doCheckQuery.bind(this),
       this.doCheckBody.bind(this),
     ];
-    console.log('Body', this.doCheckBody(req));
     return allPass(checks)(req);
   }
 

@@ -128,7 +128,6 @@ var LocalGetter = (function() {
     {
       key: 'equals',
       value: function equals(v) {
-        console.log(this.getValue(), v, this);
         return this.getValue() === v;
       },
     },
@@ -369,7 +368,6 @@ var Mock = (function() {
           this.doCheckQuery.bind(this),
           this.doCheckBody.bind(this),
         ];
-        console.log('Body', this.doCheckBody(req));
         return allPass(checks)(req);
       },
     },
