@@ -32,10 +32,11 @@ class LocalGetter {
   }
 
   equals(v) {
-    return this.value === v;
+    console.log(this.getValue(), v, this);
+    return this.getValue() === v;
   }
 
-  get value() {
+  getValue() {
     return this.fn(this.vibe.locals);
   }
 }
@@ -182,6 +183,7 @@ class Mock {
       this.doCheckQuery.bind(this),
       this.doCheckBody.bind(this),
     ];
+    console.log('Body', this.doCheckBody(req));
     return allPass(checks)(req);
   }
 
@@ -238,6 +240,7 @@ const getEligibleMock = (farso, endpoint) => (req, res, next) => {
   req.mock = find(mock => mock.isChecked(req))(mocks);
   if (!req.mock) return res.sendStatus(farso.config.errorCode || 500);
   currentVibe.setLocals(req.mock.doAssocs(currentVibe.locals, req));
+  defaultVibe.setLocals(req.mock.doAssocs(defaultVibe.locals, req));
   next();
 };
 
