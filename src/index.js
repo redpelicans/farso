@@ -26,17 +26,20 @@ const glob = require('glob');
 const EventEmitter = require('events');
 
 class LocalGetter {
-  constructor(fn, vibe) {
+  constructor(fn, farso) {
     this.fn = fn;
-    this.vibe = vibe;
+    this.farso = farso;
   }
 
   equals(v) {
-    return this.getValue() === v;
+    return this.value === v;
   }
 
-  getValue() {
-    return this.fn(this.vibe.locals);
+  get value() {
+    const locals = pathOr({}, ['currentVibe', 'locals'], this.farso);
+    if (isFunction(this.fn)) return this.fn(locals);
+    if (isArray(this.fn)) return path(this.fn, locals);
+    return path([this.fn], locals);
   }
 }
 
@@ -238,11 +241,14 @@ const getEligibleMock = (farso, endpoint) => (req, res, next) => {
   req.mock = find(mock => mock.isChecked(req))(mocks);
   if (!req.mock) return res.sendStatus(farso.config.errorCode || 500);
   currentVibe.setLocals(req.mock.doAssocs(currentVibe.locals, req));
-  defaultVibe.setLocals(req.mock.doAssocs(defaultVibe.locals, req));
   next();
 };
 
-const localGetter = vibe => fn => new LocalGetter(fn, vibe);
+const localGetter = farso => fn => new LocalGetter(fn, farso);
+const localGetterValue = farso => fn => {
+  const getter = localGetter(farso)(fn);
+  return getter && getter.value;
+};
 
 class Farso extends EventEmitter {
   constructor({ router, endpoints, vibes, globals, errorCode }) {
@@ -272,6 +278,12 @@ class Farso extends EventEmitter {
 
   registerEndpoints() {
     compose(forEach(endpoint => this.registerEndpoint(endpoint)), values)(this.endpoints);
+    const error = (err, req, res, next) => {
+      if (!err) return next();
+      console.error(err.stack); // eslint-disable-line no-console
+      return res.sendStatus(500);
+    };
+    this.router.use(error);
     return this;
   }
 
@@ -286,7 +298,7 @@ class Farso extends EventEmitter {
     this.emit(this.vibes[name] ? 'vibe.updating' : 'vibe.adding', vibe);
     this.vibes[name] = vibe;
     if (vibe.isDefault) this.currentVibe = vibe;
-    fn(mockMaker(vibe), { lget: localGetter(vibe), globals: this.globals });
+    fn(mockMaker(vibe), { lvalue: localGetterValue(this), lget: localGetter(this), globals: this.globals });
     return this;
   }
 
@@ -298,12 +310,8 @@ class Farso extends EventEmitter {
     return compose(find(prop('isDefault')), values)(this.vibes);
   }
 
-  select(name) {
-    const vibe = this.vibes[name];
-    if (!vibe) throw new Error(`Unkown vibe '${name}'`);
-    this.currentVibe = vibe;
-    this.emit('vibe.selected', vibe);
-    return this;
+  getVibe(name) {
+    return this.vibes[name];
   }
 
   loadConfig() {
@@ -311,6 +319,14 @@ class Farso extends EventEmitter {
     endpointFiles.forEach(file => require(file));
     const farsoFiles = glob.sync(path(['config', 'vibes'], this));
     farsoFiles.forEach(file => require(file));
+    return this;
+  }
+
+  select(name) {
+    const vibe = this.getVibe(name);
+    if (!vibe) throw new Error(`Unkown vibe '${name}'`);
+    this.currentVibe = vibe;
+    this.emit('vibe.selected', vibe);
     return this;
   }
 

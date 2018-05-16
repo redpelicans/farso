@@ -1,6 +1,6 @@
 {
   "name": "farso",
-  "version": "0.7.2",
+  "version": "1.0.0",
   "description": "Mocking library for NodeJS",
   "keywords": [
     "mock",

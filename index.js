@@ -117,24 +117,27 @@ var glob = require('glob');
 var EventEmitter = require('events');
 
 var LocalGetter = (function() {
-  function LocalGetter(fn, vibe) {
+  function LocalGetter(fn, farso) {
     _classCallCheck(this, LocalGetter);
 
     this.fn = fn;
-    this.vibe = vibe;
+    this.farso = farso;
   }
 
   _createClass(LocalGetter, [
     {
       key: 'equals',
       value: function equals(v) {
-        return this.getValue() === v;
+        return this.value === v;
       },
     },
     {
-      key: 'getValue',
-      value: function getValue() {
-        return this.fn(this.vibe.locals);
+      key: 'value',
+      get: function get() {
+        var locals = pathOr({}, ['currentVibe', 'locals'], this.farso);
+        if (isFunction(this.fn)) return this.fn(locals);
+        if (isArray(this.fn)) return path(this.fn, locals);
+        return path([this.fn], locals);
       },
     },
   ]);
@@ -462,14 +465,19 @@ var getEligibleMock = function getEligibleMock(farso, endpoint) {
     })(mocks);
     if (!req.mock) return res.sendStatus(farso.config.errorCode || 500);
     currentVibe.setLocals(req.mock.doAssocs(currentVibe.locals, req));
-    defaultVibe.setLocals(req.mock.doAssocs(defaultVibe.locals, req));
     next();
   };
 };
 
-var localGetter = function localGetter(vibe) {
+var localGetter = function localGetter(farso) {
   return function(fn) {
-    return new LocalGetter(fn, vibe);
+    return new LocalGetter(fn, farso);
+  };
+};
+var localGetterValue = function localGetterValue(farso) {
+  return function(fn) {
+    var getter = localGetter(farso)(fn);
+    return getter && getter.value;
   };
 };
 
@@ -527,6 +535,12 @@ var Farso = (function(_EventEmitter) {
           }),
           values,
         )(this.endpoints);
+        var error = function error(err, req, res, next) {
+          if (!err) return next();
+          console.error(err.stack); // eslint-disable-line no-console
+          return res.sendStatus(500);
+        };
+        this.router.use(error);
         return this;
       },
     },
@@ -545,7 +559,7 @@ var Farso = (function(_EventEmitter) {
         this.emit(this.vibes[name] ? 'vibe.updating' : 'vibe.adding', vibe);
         this.vibes[name] = vibe;
         if (vibe.isDefault) this.currentVibe = vibe;
-        fn(mockMaker(vibe), { lget: localGetter(vibe), globals: this.globals });
+        fn(mockMaker(vibe), { lvalue: localGetterValue(this), lget: localGetter(this), globals: this.globals });
         return this;
       },
     },
@@ -562,13 +576,9 @@ var Farso = (function(_EventEmitter) {
       },
     },
     {
-      key: 'select',
-      value: function select(name) {
-        var vibe = this.vibes[name];
-        if (!vibe) throw new Error("Unkown vibe '" + name + "'");
-        this.currentVibe = vibe;
-        this.emit('vibe.selected', vibe);
-        return this;
+      key: 'getVibe',
+      value: function getVibe(name) {
+        return this.vibes[name];
       },
     },
     {
@@ -582,6 +592,16 @@ var Farso = (function(_EventEmitter) {
         farsoFiles.forEach(function(file) {
           return require(file);
         });
+        return this;
+      },
+    },
+    {
+      key: 'select',
+      value: function select(name) {
+        var vibe = this.getVibe(name);
+        if (!vibe) throw new Error("Unkown vibe '" + name + "'");
+        this.currentVibe = vibe;
+        this.emit('vibe.selected', vibe);
         return this;
       },
     },

@@ -171,10 +171,11 @@ vibe('Main', (mock, {globals: { api: { clientId, clientSecret } } }) => {
 **function vibe(name, fn, options) or vibe.default(name, fn)**
 * `name`: String **must** match an existing `endpoint`
 * `options`: { isDefault }, set vibe as default
-* `fn`: function(mock, { globals, lget })
+* `fn`: function(mock, { globals, lget, lvalue })
 	* `mock`: function to define new mocks (see below)
 	* `globals`: config's `globals` property 
-	* `lget`: TODO[lset/lget]
+	* `lget`: function(String|Array): Object (see below)
+	* `lvalue`: function(String|Array): Object (see below) 
 	
 returns the current `farso`.
 
@@ -309,7 +310,7 @@ returns current `mock`
 
 ### lset/lget
 
-`lset/lget` allow to manage a global context between requests.
+`lset/lget/lvalue` allow to manage a local context between requests for the current vibe.
 
 We can share global data thanks to `globals` prop in config and use it in vibes definition:
 
@@ -342,11 +343,9 @@ vibe('Main', (mock, globals)  => {
 
 ```
 
-But to avoid dirty side effect here comes `lset/lget`:
+But to avoid dirty side effect here comes `lset/lget/lvalue`:
 
 ```
-const { path } = require('ramda');
-
 vibe.default('Main', (mock, { lget, globals: { token }}) => {
 
   mock('token')
@@ -355,8 +354,8 @@ vibe.default('Main', (mock, { lget, globals: { token }}) => {
     .reply([201, token]);
 
   const req_create_claim = {
-    firstname: lget(path(['data', 'firstname'])),
-   	lastname: lget(path(['data', 'lastname'])),
+    firstname: lget['data', 'firstname']),
+   	lastname: lget(['data', 'lastname']),
   };
 
   mock('claim:create')
@@ -366,13 +365,19 @@ vibe.default('Main', (mock, { lget, globals: { token }}) => {
 ```
 
 **function lget(fn)**
-* fn: `function(Object): Object`, returns data from `globals`
-use case: ```lget(path(['data', 'lastname']))``` returns ```globals.data.lastname```
-We can use any path selector outside ramda
+* fn: `function(Object): Object`, returns a getter on current vibe's `locals`
+use case: ```lget(['data', 'lastname'))``` returns a getter on ```farso.currentVibe.locals.data.lastname```
+getter will be evaluated by checker (check* methods)
 
 **function lset(fn)**
 * fn: `function(req): returns [path, value]`
-Use case : ```mock('token').lset(({ body }) => [['data', 'firstname'], body.firstname])``` will  exec ``` globals.data.firstname = body.firstname```
+Use case : ```mock('token').lset(({ body }) => [['data', 'firstname'], body.firstname])``` will  exec ``` farso.currentVibe.locals.data.firstname = body.firstname```
+
+**function lvalue(fn)**
+* fn: `function(Object): Object`, returns value from current vibe's `locals`
+use case: ```lvalue(['data', 'lastname'))``` returns ```lget(['data', 'lastname')).value```
+
+
 
 
 # Low level API
