@@ -160,6 +160,7 @@ var deepMatch = curry(function(spec, obj) {
 
       if (value.equals && isFunction(value.equals)) return acc && value.equals(obj[key]);
       else if (isRegExp(value)) return acc && value.test(obj[key]);
+      else if (isFunction(value)) return acc && value(obj[key]);
       else if (isArray(value)) return Boolean(acc && obj[key] && deepMatch(value, obj[key]));
       else if (isObject(value)) return Boolean(acc && obj[key] && deepMatch(value, obj[key]));
       return acc && value === obj[key];
@@ -244,15 +245,6 @@ var Mock = (function() {
       value: function getLabel() {
         return this.description || this.name;
       },
-
-      // replyError(param) {
-      //   if (isFunction(param)) this.doError = param;
-      //   else
-      //     this.doError = res => {
-      //       res.sendStatus(param);
-      //     };
-      //   return this;
-      // }
     },
     {
       key: 'checkBody',
@@ -269,18 +261,7 @@ var Mock = (function() {
       value: function checkParams(param) {
         if (isFunction(param)) this.paramsChecks.push(param);
         else {
-          var checkProp = function checkProp(query) {
-            return function(_ref4) {
-              var _ref5 = _slicedToArray(_ref4, 2),
-                key = _ref5[0],
-                value = _ref5[1];
-
-              return has(key, query) && isRegExp(value) ? value.test(query[key]) : equals(query[key], value);
-            };
-          };
-          this.paramsChecks.push(function(query) {
-            return compose(all(identity), map(checkProp(query)), toPairs)(param);
-          });
+          this.paramsChecks.push(deepMatch(param));
         }
         return this;
       },
@@ -290,18 +271,7 @@ var Mock = (function() {
       value: function checkQuery(param) {
         if (isFunction(param)) this.queryChecks.push(param);
         else {
-          var checkProp = function checkProp(query) {
-            return function(_ref6) {
-              var _ref7 = _slicedToArray(_ref6, 2),
-                key = _ref7[0],
-                value = _ref7[1];
-
-              return has(key, query) && isRegExp(value) ? value.test(query[key]) : equals(query[key], value);
-            };
-          };
-          this.queryChecks.push(function(query) {
-            return compose(all(identity), map(checkProp(query)), toPairs)(param);
-          });
+          this.queryChecks.push(deepMatch(param));
         }
         return this;
       },
@@ -311,29 +281,18 @@ var Mock = (function() {
       value: function checkHeader(param) {
         if (isFunction(param)) this.headerChecks.push(param);
         else {
-          var checkProp = function checkProp(header) {
-            return function(_ref8) {
-              var _ref9 = _slicedToArray(_ref8, 2),
-                key = _ref9[0],
-                value = _ref9[1];
+          var newParam = compose(
+            fromPairs,
+            map(function(_ref4) {
+              var _ref5 = _slicedToArray(_ref4, 2),
+                key = _ref5[0],
+                value = _ref5[1];
 
-              return has(key, header) && isRegExp(value) ? value.test(header[key]) : equals(header[key], value);
-            };
-          };
-          this.headerChecks.push(function(header) {
-            return compose(
-              all(identity),
-              map(checkProp(header)),
-              map(function(_ref10) {
-                var _ref11 = _slicedToArray(_ref10, 2),
-                  key = _ref11[0],
-                  value = _ref11[1];
-
-                return [key.toLowerCase(), value];
-              }),
-              toPairs,
-            )(param);
-          });
+              return [key.toLowerCase(), value];
+            }),
+            toPairs,
+          )(param);
+          this.headerChecks.push(deepMatch(newParam));
         }
         return this;
       },
@@ -404,8 +363,8 @@ var mockMaker = function mockMaker(vibe) {
 
 var Vibe = (function() {
   function Vibe(name, farso) {
-    var _ref12 = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
-      isDefault = _ref12.isDefault;
+    var _ref6 = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
+      isDefault = _ref6.isDefault;
 
     _classCallCheck(this, Vibe);
 
@@ -451,9 +410,9 @@ var Vibe = (function() {
 
 var getEligibleMock = function getEligibleMock(farso, endpoint) {
   return function(req, res, next) {
-    var _ref13 = [farso.currentVibe, farso.getDefaultVibe()],
-      currentVibe = _ref13[0],
-      defaultVibe = _ref13[1];
+    var _ref7 = [farso.currentVibe, farso.getDefaultVibe()],
+      currentVibe = _ref7[0],
+      defaultVibe = _ref7[1];
 
     if (!currentVibe) return next('route');
     var mocks = concat(
@@ -484,12 +443,12 @@ var localGetterValue = function localGetterValue(farso) {
 var Farso = (function(_EventEmitter) {
   _inherits(Farso, _EventEmitter);
 
-  function Farso(_ref14) {
-    var router = _ref14.router,
-      endpoints = _ref14.endpoints,
-      vibes = _ref14.vibes,
-      globals = _ref14.globals,
-      errorCode = _ref14.errorCode;
+  function Farso(_ref8) {
+    var router = _ref8.router,
+      endpoints = _ref8.endpoints,
+      vibes = _ref8.vibes,
+      globals = _ref8.globals,
+      errorCode = _ref8.errorCode;
 
     _classCallCheck(this, Farso);
 

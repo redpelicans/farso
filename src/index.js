@@ -54,6 +54,7 @@ const deepMatch = curry((spec, obj) => {
     reduce((acc, [key, value]) => {
       if (value.equals && isFunction(value.equals)) return acc && value.equals(obj[key]);
       else if (isRegExp(value)) return acc && value.test(obj[key]);
+      else if (isFunction(value)) return acc && value(obj[key]);
       else if (isArray(value)) return Boolean(acc && obj[key] && deepMatch(value, obj[key]));
       else if (isObject(value)) return Boolean(acc && obj[key] && deepMatch(value, obj[key]));
       return acc && value === obj[key];
@@ -111,15 +112,6 @@ class Mock {
     return this.description || this.name;
   }
 
-  // replyError(param) {
-  //   if (isFunction(param)) this.doError = param;
-  //   else
-  //     this.doError = res => {
-  //       res.sendStatus(param);
-  //     };
-  //   return this;
-  // }
-
   checkBody(param) {
     if (isFunction(param)) this.bodyChecks.push(param);
     else {
@@ -131,9 +123,7 @@ class Mock {
   checkParams(param) {
     if (isFunction(param)) this.paramsChecks.push(param);
     else {
-      const checkProp = query => ([key, value]) =>
-        has(key, query) && isRegExp(value) ? value.test(query[key]) : equals(query[key], value);
-      this.paramsChecks.push(query => compose(all(identity), map(checkProp(query)), toPairs)(param));
+      this.paramsChecks.push(deepMatch(param));
     }
     return this;
   }
@@ -141,9 +131,7 @@ class Mock {
   checkQuery(param) {
     if (isFunction(param)) this.queryChecks.push(param);
     else {
-      const checkProp = query => ([key, value]) =>
-        has(key, query) && isRegExp(value) ? value.test(query[key]) : equals(query[key], value);
-      this.queryChecks.push(query => compose(all(identity), map(checkProp(query)), toPairs)(param));
+      this.queryChecks.push(deepMatch(param));
     }
     return this;
   }
@@ -151,13 +139,8 @@ class Mock {
   checkHeader(param) {
     if (isFunction(param)) this.headerChecks.push(param);
     else {
-      const checkProp = header => ([key, value]) =>
-        has(key, header) && isRegExp(value) ? value.test(header[key]) : equals(header[key], value);
-      this.headerChecks.push(header =>
-        compose(all(identity), map(checkProp(header)), map(([key, value]) => [key.toLowerCase(), value]), toPairs)(
-          param,
-        ),
-      );
+      const newParam = compose(fromPairs, map(([key, value]) => [key.toLowerCase(), value]), toPairs)(param);
+      this.headerChecks.push(deepMatch(newParam));
     }
     return this;
   }
