@@ -1,13 +1,14 @@
 {
   "name": "farso",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Mocking library for NodeJS",
   "keywords": [
     "mock",
     "express",
     "HTTP",
     "testing",
-    "nodejs"
+    "nodejs",
+    "graphql"
   ],
   "main": "./index.js",
   "bin": {
@@ -16,19 +17,24 @@
   "repository": "https://github.com/redpelicans/farso",
   "license": "MIT",
   "dependencies": {
+    "@graphql-tools/graphql-file-loader": "^6.0.18",
+    "@graphql-tools/load": "^6.0.18",
+    "@graphql-tools/mock": "^6.0.18",
+    "@graphql-tools/schema": "^6.0.18",
     "commander": "^2.15.1",
     "cors": "^2.8.4",
     "debug": "^3.1.0",
     "express": "^4.16.3",
     "glob": "^7.1.2",
+    "graphql": "^15.3.0",
     "morgan": "^1.9.0",
     "morgan-debug": "^2.0.0",
-    "ramda": "^0.25.0"
+    "ramda": "^0.27.1"
   },
   "scripts": {
-    "dist:add": "git add index.js server.js",
+    "dist:add": "git add index.js server.js graphql.js",
     "dist": "babel src -d . --ignore __tests__/*.js",
-    "start:server": "DEBUG=farso* nodemon --watch examples --watch ./index ./server.js",
+    "start:server": "DEBUG=farso* nodemon --watch examples --watch ./graphql.js --watch ./index ./server.js",
     "test": "DEBUG=Xfarso* jest src/*",
     "lint:staged": "lint-staged",
     "lint:eslint": "eslint --ignore-pattern '!.eslintrc.js'"
@@ -59,9 +65,9 @@
     "faker": "^4.1.0",
     "jest": "^22.4.3",
     "lint-staged": "^7.0.4",
-    "nodemon": "^1.17.3",
+    "nodemon": "^2.0.4",
     "pre-commit": "^1.2.2",
-    "prettier": "^1.12.0"
+    "prettier": "^2.1.0"
   },
   "babel": {
     "presets": [

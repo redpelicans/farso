@@ -24,6 +24,7 @@ const {
 const express = require('express');
 const glob = require('glob');
 const EventEmitter = require('events');
+const { GraphQL} = require('./graphql');
 
 class LocalGetter {
   constructor(fn, farso) {
@@ -75,20 +76,20 @@ class Endpoint {
     this.reply = reply;
   }
 
+  isGraphQLEndpoint(){
+    return this.use && this.use.isGraphQLEndpoint();
+  }
+
   getLabel(vibe) {
     return vibe ? `${vibe.name}@${this.name}:${this.uri}` : `${this.name}:${this.uri}`;
   }
 }
 
-class Mock {
+class BaseMock {
   constructor(name, description) {
     this.name = name;
     this.description = description;
     this.doReply = null;
-    this.bodyChecks = [];
-    this.headerChecks = [];
-    this.queryChecks = [];
-    this.paramsChecks = [];
     this.setters = [];
   }
 
@@ -110,6 +111,32 @@ class Mock {
 
   getLabel() {
     return this.description || this.name;
+  }
+}
+
+class GQLMock extends BaseMock{
+  constructor(name, description, endpoint) {
+    super(name, description);
+    this.endpoint = endpoint;
+  }
+
+  isChecked(req) {
+    return true;
+  }
+
+  resolve(mocks){
+    this.doReply = this.endpoint.use(mocks);
+  }
+
+}
+
+class HTTPMock extends BaseMock{
+  constructor(name, description) {
+    super(name, description);
+    this.bodyChecks = [];
+    this.headerChecks = [];
+    this.queryChecks = [];
+    this.paramsChecks = [];
   }
 
   checkBody(param) {
@@ -182,7 +209,7 @@ class Mock {
 const mockMaker = vibe => (name, description) => {
   const endpoint = vibe.getEndpoint(name);
   if (!endpoint) throw new Error(`Unkown endpoint '${name}' for vibe '${vibe.name}'`);
-  return vibe.addMock(new Mock(name, description));
+  return vibe.addMock(endpoint.isGraphQLEndpoint() ? new GQLMock(name, description, endpoint): new HTTPMock(name, description));
 };
 
 class Vibe {
@@ -245,7 +272,16 @@ class Farso extends EventEmitter {
   }
 
   registerEndpoint(endpoint) {
-    if (endpoint.use) this.router.use(endpoint.uri, endpoint.use);
+    if (endpoint.isGraphQLEndpoint()) {
+      this.router.use(endpoint.uri, getEligibleMock(this, endpoint), (req, res, next) => {
+        this.emit('endpoint.selected', this.currentVibe, endpoint, req);
+        const mockFn = req.mock.doReply;
+        if (!mockFn) return next('route');
+        mockFn(req, res);
+        this.emit('mock.visited', req.mock);
+      });
+    }
+    else if (endpoint.use) this.router.use(endpoint.uri, endpoint.use);
     else {
       this.router[endpoint.method](endpoint.uri, getEligibleMock(this, endpoint), (req, res, next) => {
         this.emit('endpoint.selected', this.currentVibe, endpoint, req);
