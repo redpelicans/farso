@@ -21,7 +21,7 @@ A `vibe` is made of mocks (mocked endpoints). Definition of mocks are inspired b
 
 `farso` library is bundled with an http server api (also bin script) to run your vibes.
 
-Then manually or from your testing framework you can select the desired vibe and request endpoints, `farso` will try to select an eligible mock and execute it. Because many `mocks` can be associated to an `endpoint`, `farso` will in the order of definition run the fisrt that matches (see check methods below). If no eligible `mock` matches in current vibe `farso` will search in the default vibe to look for one.
+Then manually or from your testing framework you can select the desired vibe and request endpoints, `farso` will try to select an eligible mock and execute it. Because many `mocks` can be associated to an `endpoint`, `farso` will in the order of definition run the first that matches (see check methods below). If no eligible `mock` matches in current vibe `farso` will search in the default vibe to look for one.
 
 Run tests on it, change the vibe and ...
 
@@ -379,6 +379,46 @@ use case: ```lvalue(['data', 'lastname'))``` returns ```lget(['data', 'lastname'
 
 
 
+## GraphQL
+
+Since version 1.2.0 `farso` allow to mock GraphQL queries/mutations
+
+First define an endpoint:
+
+
+```
+// cat ./schema.graphql
+type Query {
+  echo(message: String): String
+}
+```
+
+```
+import { GraphQL } rom 'farso/graphql');
+const schema = join(__dirname, './schema.graphql');
+endpoint('graphql', { uri: '/graphql', use: GraphQL({ schemaPath: schema }) });                                
+```
+
+GraphQL endpoints use a special middleware `GraphQL`, with the path of our graphql's schema.
+
+Then mock in vibes:
+
+```
+vibe.default('main', mock => {
+  const mocks = {
+    Query: () => ({
+      echo: (_, { message }) => message,
+    })
+  }
+  mock('graphql').resolve(mocks);
+});
+```
+
+Mocking is made at resolver level and use [addMocksToSchema](https://www.graphql-tools.com/docs/mocking/)
+
+Unlike HTTP mocks, we cannot define many mocks for a single endpoint in one vibe, onlu first call of `resolve` will be used.
+
+You can get a full example in `__tests__/graphql.test.js`
 
 # Low level API
 

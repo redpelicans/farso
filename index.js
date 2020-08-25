@@ -17,10 +17,6 @@ var _require = require('ramda'),
     assocPath = _require.assocPath,
     reduce = _require.reduce,
     forEach = _require.forEach,
-    bind = _require.bind,
-    identity = _require.identity,
-    has = _require.has,
-    equals = _require.equals,
     is = _require.is,
     path = _require.path,
     pathOr = _require.pathOr,
@@ -28,7 +24,6 @@ var _require = require('ramda'),
     prop = _require.prop,
     values = _require.values,
     compose = _require.compose,
-    all = _require.all,
     allPass = _require.allPass,
     map = _require.map,
     toPairs = _require.toPairs,
@@ -38,9 +33,6 @@ var _require = require('ramda'),
 var express = require('express');
 var glob = require('glob');
 var EventEmitter = require('events');
-
-var _require2 = require('./graphql'),
-    GraphQL = _require2.GraphQL;
 
 var LocalGetter = function () {
   function LocalGetter(fn, farso) {
@@ -72,7 +64,6 @@ var isFunction = is(Function);
 var isRegExp = is(RegExp);
 var isArray = is(Array);
 var isObject = is(Object);
-var isLocalGetter = is(LocalGetter);
 
 var deepMatch = curry(function (spec, obj) {
   return compose(reduce(function (acc, _ref) {
@@ -172,7 +163,7 @@ var GQLMock = function (_BaseMock) {
 
   _createClass(GQLMock, [{
     key: 'isChecked',
-    value: function isChecked(req) {
+    value: function isChecked() {
       return true;
     }
   }, {

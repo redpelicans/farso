@@ -3,10 +3,6 @@ const {
   assocPath,
   reduce,
   forEach,
-  bind,
-  identity,
-  has,
-  equals,
   is,
   path,
   pathOr,
@@ -14,7 +10,6 @@ const {
   prop,
   values,
   compose,
-  all,
   allPass,
   map,
   toPairs,
@@ -24,7 +19,6 @@ const {
 const express = require('express');
 const glob = require('glob');
 const EventEmitter = require('events');
-const { GraphQL} = require('./graphql');
 
 class LocalGetter {
   constructor(fn, farso) {
@@ -48,7 +42,6 @@ const isFunction = is(Function);
 const isRegExp = is(RegExp);
 const isArray = is(Array);
 const isObject = is(Object);
-const isLocalGetter = is(LocalGetter);
 
 const deepMatch = curry((spec, obj) => {
   return compose(
@@ -76,7 +69,7 @@ class Endpoint {
     this.reply = reply;
   }
 
-  isGraphQLEndpoint(){
+  isGraphQLEndpoint() {
     return this.use && this.use.isGraphQLEndpoint();
   }
 
@@ -114,23 +107,22 @@ class BaseMock {
   }
 }
 
-class GQLMock extends BaseMock{
+class GQLMock extends BaseMock {
   constructor(name, description, endpoint) {
     super(name, description);
     this.endpoint = endpoint;
   }
 
-  isChecked(req) {
+  isChecked() {
     return true;
   }
 
-  resolve(mocks){
+  resolve(mocks) {
     this.doReply = this.endpoint.use(mocks);
   }
-
 }
 
-class HTTPMock extends BaseMock{
+class HTTPMock extends BaseMock {
   constructor(name, description) {
     super(name, description);
     this.bodyChecks = [];
@@ -166,7 +158,11 @@ class HTTPMock extends BaseMock{
   checkHeader(param) {
     if (isFunction(param)) this.headerChecks.push(param);
     else {
-      const newParam = compose(fromPairs, map(([key, value]) => [key.toLowerCase(), value]), toPairs)(param);
+      const newParam = compose(
+        fromPairs,
+        map(([key, value]) => [key.toLowerCase(), value]),
+        toPairs,
+      )(param);
       this.headerChecks.push(deepMatch(newParam));
     }
     return this;
@@ -209,7 +205,9 @@ class HTTPMock extends BaseMock{
 const mockMaker = vibe => (name, description) => {
   const endpoint = vibe.getEndpoint(name);
   if (!endpoint) throw new Error(`Unkown endpoint '${name}' for vibe '${vibe.name}'`);
-  return vibe.addMock(endpoint.isGraphQLEndpoint() ? new GQLMock(name, description, endpoint): new HTTPMock(name, description));
+  return vibe.addMock(
+    endpoint.isGraphQLEndpoint() ? new GQLMock(name, description, endpoint) : new HTTPMock(name, description),
+  );
 };
 
 class Vibe {
@@ -280,8 +278,7 @@ class Farso extends EventEmitter {
         mockFn(req, res);
         this.emit('mock.visited', req.mock);
       });
-    }
-    else if (endpoint.use) this.router.use(endpoint.uri, endpoint.use);
+    } else if (endpoint.use) this.router.use(endpoint.uri, endpoint.use);
     else {
       this.router[endpoint.method](endpoint.uri, getEligibleMock(this, endpoint), (req, res, next) => {
         this.emit('endpoint.selected', this.currentVibe, endpoint, req);
@@ -296,7 +293,10 @@ class Farso extends EventEmitter {
   }
 
   registerEndpoints() {
-    compose(forEach(endpoint => this.registerEndpoint(endpoint)), values)(this.endpoints);
+    compose(
+      forEach(endpoint => this.registerEndpoint(endpoint)),
+      values,
+    )(this.endpoints);
     const error = (err, req, res, next) => {
       if (!err) return next();
       console.error(err.stack); // eslint-disable-line no-console
