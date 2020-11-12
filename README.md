@@ -98,6 +98,7 @@ With DSL api we will use the embendded server and will setup farso library with 
 
 * `host`: default to localhost
 * `port`: optional, server's binding port, when no set server will bind dynamically to an available port
+* `bodySizeLimit`: see [limit property](http://expressjs.com/fr/api.html#express.json)
 * `errorCode`: optional, http status code to return when an `endpoint` matches without a `mock`.
 * `vibes`: glob partern to select vibe's files to load (see below) ex : `path.join(__dirname, './data/**/*.vibes.js')` or just `path.join(__dirname, './vibes.js')`
 * `endpoint`: glob partern to select endpoint's files to load (see below)

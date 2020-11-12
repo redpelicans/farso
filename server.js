@@ -42,12 +42,13 @@ var initServer = function initServer(ctx) {
   var _ctx$host = ctx.host,
       host = _ctx$host === undefined ? 'localhost' : _ctx$host,
       port = ctx.port,
-      farso = ctx.farso;
+      farso = ctx.farso,
+      bodySizeLimit = ctx.bodySizeLimit;
 
   return new Promise(function (resolve, reject) {
     var app = express();
     app.use(cors());
-    app.use(express.json());
+    app.use(express.json({ limit: bodySizeLimit || '100kb' }));
     app.use(express.urlencoded());
     app.get(adminPath + '/:vibe', selectVibe(farso));
     app.get(adminPath, listVibes(farso));

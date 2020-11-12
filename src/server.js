@@ -26,11 +26,11 @@ const selectVibe = farso => (req, res) => {
 const adminPath = '/_vibes_';
 
 const initServer = ctx => {
-  const { host = 'localhost', port, farso } = ctx;
+  const { host = 'localhost', port, farso, bodySizeLimit } = ctx;
   return new Promise((resolve, reject) => {
     const app = express();
     app.use(cors());
-    app.use(express.json());
+    app.use(express.json({ limit: bodySizeLimit || '100kb' }));
     app.use(express.urlencoded());
     app.get(`${adminPath}/:vibe`, selectVibe(farso));
     app.get(adminPath, listVibes(farso));
