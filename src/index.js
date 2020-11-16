@@ -70,7 +70,7 @@ class Endpoint {
   }
 
   isGraphQLEndpoint() {
-    return this.use && this.use.isGraphQLEndpoint();
+    return this.use && this.use.isGraphQLEndpoint && this.use.isGraphQLEndpoint();
   }
 
   getLabel(vibe) {
